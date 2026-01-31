@@ -1,11 +1,13 @@
 import React from 'react';
 
-const Input = ({ label, type = "text", name, placeholder, required = false, onChange, value, error, className = "" }) => {
+const Input = ({ label, type = "text", name, placeholder, required = false, onChange, value, error, className = "", showLabel = true }) => {
     return (
         <div className={`mb-6 group ${className}`}>
-            <label className="block text-sm font-semibold text-gray-700 mb-2 ml-1 transition-colors group-focus-within:text-stratygo-red">
-                {label} {required && <span className="text-stratygo-red">*</span>}
-            </label>
+            {showLabel && (label || required) && (
+                <label className="block text-sm font-semibold text-stratygo-dark mb-2 ml-1 transition-colors group-focus-within:text-stratygo-red">
+                    {label} {required && <span className="text-stratygo-red">*</span>}
+                </label>
+            )}
             <div className="relative">
                 <input
                     type={type}

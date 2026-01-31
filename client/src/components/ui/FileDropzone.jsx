@@ -42,7 +42,7 @@ const FileDropzone = ({ label, name, required, onFileChange, acceptedFileTypes =
 
     return (
         <div className="mb-6 group">
-            <label className="block text-sm font-semibold text-gray-700 mb-2 ml-1 transition-colors group-hover:text-stratygo-red">
+            <label className="block text-sm font-semibold text-stratygo-dark mb-2 ml-1 transition-colors group-hover:text-stratygo-red">
                 {label} {required && <span className="text-stratygo-red">*</span>}
             </label>
 
