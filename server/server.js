@@ -37,6 +37,16 @@ const dbConfig = {
 
 const pool = mysql.createPool(dbConfig);
 
+// Test Database Connection
+pool.getConnection()
+    .then(connection => {
+        console.log('✅ Connected to MySQL Database');
+        connection.release();
+    })
+    .catch(err => {
+        console.error('❌ Database Connection Error:', err.message);
+    });
+
 // Configure Multer for file uploads
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
