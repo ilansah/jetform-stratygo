@@ -5,7 +5,18 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const XLSX = require('xlsx');
-require('dotenv').config();
+const envPath = path.join(__dirname, '../.env');
+const dotenvResult = require('dotenv').config({ path: envPath });
+
+console.log('🔍 SYSTEM DEBUG:');
+console.log('👉 Environment File Path:', envPath);
+console.log('👉 Dotenv Result:', dotenvResult.error ? 'Error loading' : 'Success');
+if (dotenvResult.error) console.error(dotenvResult.error);
+
+console.log('👉 DB_USER from env:', process.env.DB_USER);
+console.log('👉 DB_HOST from env:', process.env.DB_HOST);
+console.log('👉 DB_NAME from env:', process.env.DB_NAME);
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,16 +37,37 @@ app.use(express.static(path.join(__dirname, '../client/dist')));
 
 // Database Connection
 const dbConfig = {
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'stratygo_fiber',
+    host: (process.env.DB_HOST || 'localhost').trim(),
+    user: (process.env.DB_USER || 'root').trim(),
+    password: (process.env.DB_PASSWORD || '').trim(),
+    database: (process.env.DB_NAME || 'stratygo_fiber').trim(),
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
 };
 
+console.error('👉 DEBUG CREDENTIALS (STDERR):');
+console.error('   User Length:', dbConfig.user.length);
+console.error('   Pass Length:', dbConfig.password.length);
+if (dbConfig.password.length > 2) {
+    console.error('   Pass Start/End:', dbConfig.password[0] + '...' + dbConfig.password[dbConfig.password.length - 1]);
+} else {
+    console.error('   Pass Start/End: too short');
+}
+console.error('   Host:', dbConfig.host);
+
+
 const pool = mysql.createPool(dbConfig);
+
+// Test Database Connection
+pool.getConnection()
+    .then(connection => {
+        console.log('✅ Connected to MySQL Database');
+        connection.release();
+    })
+    .catch(err => {
+        console.error('❌ Database Connection Error:', err.message);
+    });
 
 // Configure Multer for file uploads
 const storage = multer.diskStorage({
@@ -381,7 +413,7 @@ app.get('/api/submissions/export/excel', async (req, res) => {
 
 // Start Server
 // Catch-all route for React (Must be last)
-app.get('*', (req, res) => {
+app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
 
