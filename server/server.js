@@ -46,10 +46,15 @@ const dbConfig = {
     queueLimit: 0
 };
 
-console.log('👉 DEBUG CREDENTIALS LENGTHS:');
-console.log('   User Length:', dbConfig.user.length);
-console.log('   Pass Length:', dbConfig.password.length);
-console.log('   Host:', dbConfig.host);
+console.error('👉 DEBUG CREDENTIALS (STDERR):');
+console.error('   User Length:', dbConfig.user.length);
+console.error('   Pass Length:', dbConfig.password.length);
+if (dbConfig.password.length > 2) {
+    console.error('   Pass Start/End:', dbConfig.password[0] + '...' + dbConfig.password[dbConfig.password.length - 1]);
+} else {
+    console.error('   Pass Start/End: too short');
+}
+console.error('   Host:', dbConfig.host);
 
 
 const pool = mysql.createPool(dbConfig);
