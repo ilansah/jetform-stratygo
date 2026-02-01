@@ -146,7 +146,7 @@ const PublicForm = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-stratygo-light-gray/30 to-white pb-20 font-sans">
+        <div className="min-h-screen bg-gradient-to-br from-stratygo-light-gray/30 to-white pb-20 font-sans overflow-x-hidden">
             <Header />
 
             <main className="container mx-auto px-4 max-w-4xl relative">
@@ -155,12 +155,12 @@ const PublicForm = () => {
                 <div className="absolute top-0 -right-64 w-96 h-96 bg-stratygo-red/5 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
 
                 <div className="bg-white rounded-2xl shadow-2xl shadow-black/5 overflow-hidden border border-gray-200 relative z-10 my-8">
-                    <div className="p-10 border-b border-gray-200 bg-gradient-to-b from-white to-stratygo-light-gray/20 text-center">
-                        <h1 className="text-3xl font-extrabold text-stratygo-dark tracking-tight">Accréditation Fibre</h1>
+                    <div className="p-6 md:p-10 border-b border-gray-200 bg-gradient-to-b from-white to-stratygo-light-gray/20 text-center">
+                        <h1 className="text-3xl font-extrabold text-stratygo-dark tracking-tight">Formulaire d'Accréditations</h1>
                         <p className="text-stratygo-gray mt-3 text-lg">Formulaire officiel de demande d'accès</p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="p-10 space-y-12">
+                    <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-12">
                         {/* 1. Informations Personnelles */}
                         <section>
                             <div className="flex items-center mb-6">
@@ -170,8 +170,8 @@ const PublicForm = () => {
                                 <h3 className="text-xl font-bold text-stratygo-dark">Informations Personnelles</h3>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-14">
-                                <Input label="Nom complet" name="full_name" required value={formData.full_name} onChange={handleInputChange} placeholder="Prénom et Nom" />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-0 md:pl-14">
+                                <Input label="Nom Prénom" name="full_name" required value={formData.full_name} onChange={handleInputChange} placeholder="Prénom et Nom" />
                                 <Input label="Numéro de téléphone" name="phone" required value={formData.phone} onChange={handleInputChange} placeholder="+33 6..." />
                                 <Input label="Email" name="email" type="email" required value={formData.email} onChange={handleInputChange} placeholder="exemple@email.com" className="md:col-span-2" />
 
@@ -199,7 +199,7 @@ const PublicForm = () => {
                                 <h3 className="text-xl font-bold text-stratygo-dark">Informations Opérationnelles</h3>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-14">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-0 md:pl-14">
                                 <Input label="Date de commencement" name="start_date" type="date" required value={formData.start_date} onChange={handleInputChange} />
 
                                 {/* Role Selection */}
@@ -227,7 +227,7 @@ const PublicForm = () => {
                                     </div>
                                 </div>
 
-                                <Input label="Ville d'agence" name="agency_city" required value={formData.agency_city} onChange={handleInputChange} />
+                                <Input label="Agence" name="agency_city" required value={formData.agency_city} onChange={handleInputChange} />
 
                                 {/* Conditional Hierarchy Fields */}
                                 {formData.role === 'Vendeur' && (
@@ -288,14 +288,14 @@ const PublicForm = () => {
                                 <h3 className="text-xl font-bold text-stratygo-dark">Documents Requis</h3>
                             </div>
 
-                            <div className="grid grid-cols-1 gap-4 pl-14">
+                            <div className="grid grid-cols-1 gap-4 pl-0 md:pl-14">
                                 <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-100 mb-4 flex items-start">
                                     <AlertCircle className="text-yellow-600 mr-3 mt-0.5 flex-shrink-0" size={18} />
                                     <p className="text-sm text-yellow-800">Assurez-vous que les photos sont nettes et lisibles. La photo d'identité doit être sur fond blanc uni.</p>
                                 </div>
                                 <FileDropzone label="Pièce d'identité (Recto)" name="id_card_front" required onFileChange={handleFileChange} />
                                 <FileDropzone label="Pièce d'identité (Verso)" name="id_card_back" required onFileChange={handleFileChange} />
-                                <FileDropzone label="Photo d'identité (Fond blanc uniquement)" name="photo" required onFileChange={handleFileChange} acceptedFileTypes="image/*" />
+                                <FileDropzone label="Photo d'identité (Fond blanc uniquement)" name="photo" required onFileChange={handleFileChange} acceptedFileTypes="image/*,application/pdf" />
                             </div>
                         </section>
 
@@ -310,7 +310,7 @@ const PublicForm = () => {
                                 <h3 className="text-xl font-bold text-stratygo-dark">Validation & Signature</h3>
                             </div>
 
-                            <div className="pl-14 space-y-6">
+                            <div className="pl-0 md:pl-14 space-y-6">
                                 <div className="flex items-center space-x-3 p-4 rounded-xl border border-gray-200 hover:bg-white hover:shadow-sm transition-all duration-200 cursor-pointer" style={{ backgroundColor: 'rgba(245, 245, 245, 0.3)' }} onClick={() => handleInputChange({ target: { name: 'fiber_test_done', checked: !formData.fiber_test_done, type: 'checkbox' } })}>
                                     <div className="w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors" style={formData.fiber_test_done ? { backgroundColor: '#2d2d2d', borderColor: '#2d2d2d' } : { borderColor: '#d1d5db', backgroundColor: '#ffffff' }}>
                                         {formData.fiber_test_done && <CheckCircle2 size={16} style={{ color: '#ffffff' }} />}
@@ -349,11 +349,11 @@ const PublicForm = () => {
                                         </div>
                                     )}
 
-                                    <div className="flex items-center space-x-3 mt-4" onClick={() => handleInputChange({ target: { name: 'terms_accepted', checked: !formData.terms_accepted, type: 'checkbox' } })}>
-                                        <div className="w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors flex-shrink-0 cursor-pointer" style={formData.terms_accepted ? { backgroundColor: '#2d2d2d', borderColor: '#2d2d2d' } : { borderColor: '#d1d5db', backgroundColor: '#ffffff' }}>
+                                    <div className="flex items-center space-x-3 mt-4 opacity-75 cursor-not-allowed">
+                                        <div className="w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors flex-shrink-0" style={formData.terms_accepted ? { backgroundColor: '#2d2d2d', borderColor: '#2d2d2d' } : { borderColor: '#d1d5db', backgroundColor: '#ffffff' }}>
                                             {formData.terms_accepted && <CheckCircle2 size={16} style={{ color: '#ffffff' }} />}
                                         </div>
-                                        <label className="text-sm font-semibold cursor-pointer select-none" style={{ color: '#2d2d2d' }}>J'accepte les termes & conditions du code de déontologie de STRATYGO <span style={{ color: '#2d2d2d' }}>*</span></label>
+                                        <label className="text-sm font-semibold select-none" style={{ color: '#2d2d2d' }}>J'accepte les termes & conditions du code de déontologie de STRATYGO <span style={{ color: '#2d2d2d' }}>*</span></label>
                                     </div>
                                 </div>
 
@@ -404,7 +404,7 @@ const PublicForm = () => {
             <PdfSignatureModal
                 isOpen={showPdfModal}
                 onClose={() => setShowPdfModal(false)}
-                pdfUrl="/documents/code-deontologie.pdf"
+                pdfUrl={signedPdfBlob ? URL.createObjectURL(signedPdfBlob) : "/documents/code-deontologie.pdf"}
                 onSigned={(pdfBlob) => {
                     setSignedPdfBlob(pdfBlob);
                     setFormData(prev => ({ ...prev, terms_accepted: true }));
