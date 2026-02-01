@@ -32,6 +32,7 @@ const PdfSignatureModal = ({ isOpen, onClose, pdfUrl, onSigned }) => {
             console.log('PDF loaded successfully:', pdf);
             setPdfDoc(pdf);
             setTotalPages(pdf.numPages);
+            setCurrentPage(1);
             console.log('Total pages:', pdf.numPages);
             renderPage(pdf, 1);
         } catch (error) {
@@ -122,12 +123,14 @@ const PdfSignatureModal = ({ isOpen, onClose, pdfUrl, onSigned }) => {
             const loadingTask = pdfjsLib.getDocument(signedPdfUrl);
             const pdf = await loadingTask.promise;
             setPdfDoc(pdf);
+            setTotalPages(pdf.numPages);
             renderPage(pdf, currentPage);
 
             // Notify parent component
             if (onSigned) {
                 onSigned(blob);
             }
+            onClose();
         } catch (error) {
             console.error('Error adding signature to PDF:', error);
         }

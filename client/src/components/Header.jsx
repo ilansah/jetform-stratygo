@@ -20,7 +20,7 @@ const Header = () => {
                     {/* Subtitle */}
                     <div className="flex flex-col">
                         <span className="text-xs font-semibold uppercase tracking-[0.15em] text-stratygo-gray leading-none">
-                            Système d'
+                            Formulaire d'
                         </span>
                         <span className="text-lg font-bold tracking-tight text-stratygo-dark leading-none mt-1">
                             Accréditations
