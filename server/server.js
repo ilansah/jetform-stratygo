@@ -5,7 +5,18 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const XLSX = require('xlsx');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+const envPath = path.join(__dirname, '../.env');
+const dotenvResult = require('dotenv').config({ path: envPath });
+
+console.log('🔍 SYSTEM DEBUG:');
+console.log('👉 Environment File Path:', envPath);
+console.log('👉 Dotenv Result:', dotenvResult.error ? 'Error loading' : 'Success');
+if (dotenvResult.error) console.error(dotenvResult.error);
+
+console.log('👉 DB_USER from env:', process.env.DB_USER);
+console.log('👉 DB_HOST from env:', process.env.DB_HOST);
+console.log('👉 DB_NAME from env:', process.env.DB_NAME);
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
