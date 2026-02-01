@@ -37,14 +37,20 @@ app.use(express.static(path.join(__dirname, '../client/dist')));
 
 // Database Connection
 const dbConfig = {
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'stratygo_fiber',
+    host: (process.env.DB_HOST || 'localhost').trim(),
+    user: (process.env.DB_USER || 'root').trim(),
+    password: (process.env.DB_PASSWORD || '').trim(),
+    database: (process.env.DB_NAME || 'stratygo_fiber').trim(),
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
 };
+
+console.log('👉 DEBUG CREDENTIALS LENGTHS:');
+console.log('   User Length:', dbConfig.user.length);
+console.log('   Pass Length:', dbConfig.password.length);
+console.log('   Host:', dbConfig.host);
+
 
 const pool = mysql.createPool(dbConfig);
 
