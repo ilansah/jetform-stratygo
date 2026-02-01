@@ -7,6 +7,9 @@
     "server": "node server/server.js",
     "client": "cd client && npm run dev",
     "dev": "npm run server",
+    "start": "node server/server.js",
+    "build": "cd client && npm install && npm run build",
+    "postinstall": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -18,6 +21,6 @@
     "express": "^5.2.1",
     "multer": "^2.0.2",
     "mysql2": "^3.16.2",
-    "xlsx": "^0.18.5"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz"
   }
 }
