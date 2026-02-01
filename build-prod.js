@@ -49,9 +49,12 @@ try {
         }
     });
 
-    // Copy needed root files (like schema.sql)
+    // Copy needed root files (like schema.sql and index.js)
     if (fs.existsSync(path.join(PROJECT_ROOT, 'schema.sql'))) {
         fs.copyFileSync(path.join(PROJECT_ROOT, 'schema.sql'), path.join(PROD_DIR, 'schema.sql'));
+    }
+    if (fs.existsSync(path.join(PROJECT_ROOT, 'index.js'))) {
+        fs.copyFileSync(path.join(PROJECT_ROOT, 'index.js'), path.join(PROD_DIR, 'index.js'));
     }
 
     // 4. Copy React Build to client/dist (so server.js finds it at ../client/dist)
