@@ -20,6 +20,6 @@
     "express": "^5.2.1",
     "multer": "^2.0.2",
     "mysql2": "^3.16.2",
-    "xlsx": "^0.18.5"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz"
   }
 }

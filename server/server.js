@@ -381,7 +381,7 @@ app.get('/api/submissions/export/excel', async (req, res) => {
 
 // Start Server
 // Catch-all route for React (Must be last)
-app.get('*', (req, res) => {
+app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
 
