@@ -2,7 +2,7 @@
   "name": "jetform-stratygo",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server/server.js",
   "scripts": {
     "server": "node server/server.js",
     "client": "cd client && npm run dev",
