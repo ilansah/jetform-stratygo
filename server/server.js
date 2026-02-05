@@ -443,7 +443,7 @@ app.get(/.*/, (req, res) => {
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-    console.error('🔥 Global Error Handler:', err); // Log the full error
+    console.error('🔥 Global Error Handler Triggered:', err.message); // Log the full error
     if (err instanceof multer.MulterError) {
         return res.status(400).json({ error: 'Multer Error', details: err.message });
     }
