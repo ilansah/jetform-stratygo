@@ -21,7 +21,6 @@ CREATE TABLE IF NOT EXISTS accreditations (
     team_code VARCHAR(50) NOT NULL,
     manager_email VARCHAR(255) NOT NULL,
     hr_email VARCHAR(255) NOT NULL,
-    tshirt_size ENUM('S', 'M', 'L', 'XL', 'XXL') NOT NULL,
     
     -- Files (Store paths)
     id_card_front_path VARCHAR(255),

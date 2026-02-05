@@ -70,22 +70,7 @@ const AdminDashboard = () => {
         }
     };
 
-    const updateStatus = async (id, newStatus) => {
-        try {
-            const response = await fetch(`/api/submissions/${id}/status`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: newStatus }),
-            });
-            if (response.ok) {
-                setSubmissions(submissions.map(sub =>
-                    sub.id === id ? { ...sub, status: newStatus } : sub
-                ));
-            }
-        } catch (error) {
-            console.error('Error updating status:', error);
-        }
-    };
+
 
     const exportToCSV = () => {
         window.open('/api/submissions/export/csv', '_blank');
@@ -94,6 +79,11 @@ const AdminDashboard = () => {
     const exportToExcel = () => {
         window.open('/api/submissions/export/excel', '_blank');
     };
+
+    // Modal state for refusal
+    const [showRefusalModal, setShowRefusalModal] = useState(false);
+    const [selectedSubmissionId, setSelectedSubmissionId] = useState(null);
+    const [refusalReason, setRefusalReason] = useState('');
 
     const deleteSubmission = async (id) => {
         if (!confirm('Êtes-vous sûr de vouloir supprimer cette demande ? Cette action est irréversible.')) {
@@ -114,6 +104,41 @@ const AdminDashboard = () => {
         } catch (error) {
             console.error('Error deleting submission:', error);
             alert('Erreur lors de la suppression');
+        }
+    };
+
+    const handleStatusChange = (id, newStatus) => {
+        if (newStatus === 'Refusé') {
+            setSelectedSubmissionId(id);
+            setRefusalReason('');
+            setShowRefusalModal(true);
+        } else {
+            updateStatus(id, newStatus);
+        }
+    };
+
+    const confirmRefusal = () => {
+        if (selectedSubmissionId) {
+            updateStatus(selectedSubmissionId, 'Refusé', refusalReason);
+            setShowRefusalModal(false);
+            setSelectedSubmissionId(null);
+        }
+    };
+
+    const updateStatus = async (id, newStatus, reason = null) => {
+        try {
+            const response = await fetch(`/api/submissions/${id}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus, motif: reason }),
+            });
+            if (response.ok) {
+                setSubmissions(submissions.map(sub =>
+                    sub.id === id ? { ...sub, status: newStatus } : sub
+                ));
+            }
+        } catch (error) {
+            console.error('Error updating status:', error);
         }
     };
 
@@ -288,7 +313,6 @@ const AdminDashboard = () => {
                                     <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Animateur</th>
                                     <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Date Début</th>
                                     <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Code Équipe</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Taille</th>
                                     <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Test Fibre</th>
                                     <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Documents</th>
                                     <th className="px-4 py-4 text-center text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Actions</th>
@@ -312,7 +336,7 @@ const AdminDashboard = () => {
                                         <td className="px-4 py-3 whitespace-nowrap">
                                             <select
                                                 value={sub.status}
-                                                onChange={(e) => updateStatus(sub.id, e.target.value)}
+                                                onChange={(e) => handleStatusChange(sub.id, e.target.value)}
                                                 className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border-2 ${sub.status === 'Approuvé'
                                                     ? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200'
                                                     : sub.status === 'Refusé'
@@ -442,15 +466,7 @@ const AdminDashboard = () => {
                                             />
                                         </td>
 
-                                        {/* Taille */}
-                                        <td className="px-4 py-3 min-w-[100px]">
-                                            <EditableCell
-                                                value={sub.tshirt_size}
-                                                onSave={(value) => updateField(sub.id, 'tshirt_size', value)}
-                                                type="select"
-                                                options={['S', 'M', 'L', 'XL', 'XXL']}
-                                            />
-                                        </td>
+
 
                                         {/* Test Fibre */}
                                         <td className="px-4 py-3 whitespace-nowrap text-center">
@@ -579,6 +595,40 @@ const AdminDashboard = () => {
                                         title="PDF Preview"
                                     />
                                 ) : null}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Refusal Reason Modal */}
+                {showRefusalModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                        <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
+                            <h3 className="text-xl font-bold mb-4" style={{ color: '#2d2d2d' }}>Motif du refus</h3>
+                            <p className="text-sm text-gray-500 mb-4">
+                                Veuillez indiquer la raison du refus pour notifier le collaborateur.
+                            </p>
+                            <textarea
+                                value={refusalReason}
+                                onChange={(e) => setRefusalReason(e.target.value)}
+                                placeholder="Ex: Document d'identité illisible, photo non conforme..."
+                                className="w-full h-32 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all resize-none mb-6"
+                                autoFocus
+                            />
+                            <div className="flex justify-end space-x-3">
+                                <button
+                                    onClick={() => setShowRefusalModal(false)}
+                                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                                >
+                                    Annuler
+                                </button>
+                                <button
+                                    onClick={confirmRefusal}
+                                    disabled={!refusalReason.trim()}
+                                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-red-200"
+                                >
+                                    Confirmer le refus
+                                </button>
                             </div>
                         </div>
                     </div>

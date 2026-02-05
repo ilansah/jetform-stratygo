@@ -26,7 +26,6 @@ const PublicForm = () => {
         team_code: '',
         manager_email: '',
         hr_email: '',
-        tshirt_size: 'S',
         fiber_test_done: false,
         proxy_name: '',
         terms_accepted: false,
@@ -92,7 +91,6 @@ const PublicForm = () => {
         form.append('team_code', formData.team_code);
         form.append('manager_email', formData.manager_email);
         form.append('hr_email', formData.hr_email);
-        form.append('tshirt_size', formData.tshirt_size);
         form.append('fiber_test_done', formData.fiber_test_done);
         form.append('proxy_name', formData.proxy_name);
         form.append('terms_accepted', formData.terms_accepted);
@@ -227,7 +225,7 @@ const PublicForm = () => {
                                     </div>
                                 </div>
 
-                                <Input label="Agence" name="agency_city" required value={formData.agency_city} onChange={handleInputChange} />
+
 
                                 {/* Conditional Hierarchy Fields */}
                                 {formData.role === 'Vendeur' && (
@@ -250,27 +248,8 @@ const PublicForm = () => {
                                 )}
 
                                 <Input label="Code équipe" name="team_code" required value={formData.team_code} onChange={handleInputChange} />
+                                <Input label="Agence" name="agency_city" required value={formData.agency_city} onChange={handleInputChange} />
 
-                                <div className="mb-6 group">
-                                    <label className="block text-sm font-semibold text-stratygo-dark mb-2 ml-1 transition-colors group-hover:text-stratygo-dark">Taille Tee-shirt <span className="text-stratygo-dark">*</span></label>
-                                    <div className="relative">
-                                        <select
-                                            name="tshirt_size"
-                                            value={formData.tshirt_size}
-                                            onChange={handleInputChange}
-                                            className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-stratygo-dark/10 focus:border-stratygo-dark focus:bg-white transition-all duration-300 shadow-sm appearance-none cursor-pointer"
-                                        >
-                                            <option value="S">S</option>
-                                            <option value="M">M</option>
-                                            <option value="L">L</option>
-                                            <option value="XL">XL</option>
-                                            <option value="XXL">XXL</option>
-                                        </select>
-                                        <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
-                                            <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" fillRule="evenodd"></path></svg>
-                                        </div>
-                                    </div>
-                                </div>
 
                                 <Input label="Courriel du gestionnaire" name="manager_email" type="email" required value={formData.manager_email} onChange={handleInputChange} />
                                 <Input label="E-mail service RH" name="hr_email" type="email" required value={formData.hr_email} onChange={handleInputChange} />
@@ -293,9 +272,9 @@ const PublicForm = () => {
                                     <AlertCircle className="text-yellow-600 mr-3 mt-0.5 flex-shrink-0" size={18} />
                                     <p className="text-sm text-yellow-800">Assurez-vous que les photos sont nettes et lisibles. La photo d'identité doit être sur fond blanc uni.</p>
                                 </div>
-                                <FileDropzone label="Pièce d'identité (Recto)" name="id_card_front" required onFileChange={handleFileChange} />
-                                <FileDropzone label="Pièce d'identité (Verso)" name="id_card_back" required onFileChange={handleFileChange} />
-                                <FileDropzone label="Photo d'identité (Fond blanc uniquement)" name="photo" required onFileChange={handleFileChange} acceptedFileTypes="image/*,application/pdf" />
+                                <FileDropzone label="Pièce d'identité (Recto)" name="id_card_front" required onFileChange={handleFileChange} acceptedFileTypes="application/pdf" />
+                                <FileDropzone label="Pièce d'identité (Verso)" name="id_card_back" required onFileChange={handleFileChange} acceptedFileTypes="application/pdf" />
+                                <FileDropzone label="Photo d'identité (Fond blanc uniquement)" name="photo" required onFileChange={handleFileChange} acceptedFileTypes="application/pdf" />
                             </div>
                         </section>
 

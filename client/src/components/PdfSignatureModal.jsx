@@ -52,11 +52,21 @@ const PdfSignatureModal = ({ isOpen, onClose, pdfUrl, onSigned }) => {
         const scale = (containerWidth - 40) / viewport.width; // 40px for padding
         const scaledViewport = page.getViewport({ scale });
 
-        canvas.height = scaledViewport.height;
-        canvas.width = scaledViewport.width;
+        // High DPI Support
+        const outputScale = window.devicePixelRatio || 1;
+
+        canvas.width = Math.floor(scaledViewport.width * outputScale);
+        canvas.height = Math.floor(scaledViewport.height * outputScale);
+        canvas.style.width = Math.floor(scaledViewport.width) + "px";
+        canvas.style.height = Math.floor(scaledViewport.height) + "px";
+
+        const transform = outputScale !== 1
+            ? [outputScale, 0, 0, outputScale, 0, 0]
+            : null;
 
         const renderContext = {
             canvasContext: context,
+            transform: transform,
             viewport: scaledViewport
         };
 

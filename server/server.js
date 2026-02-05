@@ -88,11 +88,11 @@ const storage = multer.diskStorage({
 const upload = multer({
     storage: storage,
     fileFilter: (req, file, cb) => {
-        // Accept images and PDF
-        if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
+        // Accept only PDF
+        if (file.mimetype === 'application/pdf') {
             cb(null, true);
         } else {
-            cb(new Error('Only images and PDF are allowed!'), false);
+            cb(new Error('Seuls les fichiers PDF sont autorisés !'), false);
         }
     }
 });
@@ -123,9 +123,9 @@ app.post('/api/submissions', upload.fields([
         const query = `
             INSERT INTO accreditations 
             (full_name, phone, email, address, role, agency_city, direct_manager_name, director_name, network_animator_name, 
-             start_date, team_code, manager_email, hr_email, tshirt_size, fiber_test_done, proxy_name, terms_accepted, 
+             start_date, team_code, manager_email, hr_email, fiber_test_done, proxy_name, terms_accepted, 
              id_card_front_path, id_card_back_path, photo_path, signature_path, signed_pdf_path)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         const values = [
@@ -142,7 +142,6 @@ app.post('/api/submissions', upload.fields([
             data.team_code,
             data.manager_email,
             data.hr_email,
-            data.tshirt_size,
             data.fiber_test_done === 'true' || data.fiber_test_done === true,
             data.proxy_name || null,
             data.terms_accepted === 'true' || data.terms_accepted === true,
@@ -173,7 +172,7 @@ app.put('/api/submissions/:id', async (req, res) => {
         const allowedFields = [
             'full_name', 'phone', 'email', 'address', 'start_date',
             'manager_name', 'team_code', 'manager_email', 'hr_email',
-            'tshirt_size', 'fiber_test_done', 'proxy_name', 'terms_accepted', 'status'
+            'fiber_test_done', 'proxy_name', 'terms_accepted', 'status'
         ];
 
         const updateFields = [];
@@ -222,16 +221,39 @@ app.get('/api/submissions', async (req, res) => {
 });
 
 // 3. Update Status (Admin)
+const { sendApprovalEmail, sendRefusalEmail } = require('./emailService');
+
+// ... (existing code)
+
+// 3. Update Status (Admin)
 app.patch('/api/submissions/:id/status', async (req, res) => {
     try {
         const { id } = req.params;
-        const { status } = req.body;
+        const { status, motif } = req.body;
 
         if (!['En Cours', 'Approuvé', 'Refusé'].includes(status)) {
             return res.status(400).json({ error: 'Invalid status' });
         }
 
+        // Fetch user details for email
+        const [rows] = await pool.query('SELECT email, full_name, status FROM accreditations WHERE id = ?', [id]);
+        if (rows.length === 0) {
+            return res.status(404).json({ error: 'Submission not found' });
+        }
+        const user = rows[0];
+        const oldStatus = user.status;
+
         await pool.execute('UPDATE accreditations SET status = ? WHERE id = ?', [status, id]);
+
+        // Send email notification if status changed
+        if (oldStatus !== status) {
+            if (status === 'Approuvé') {
+                await sendApprovalEmail(user.email, user.full_name);
+            } else if (status === 'Refusé') {
+                await sendRefusalEmail(user.email, user.full_name, motif);
+            }
+        }
+
         res.json({ message: 'Status updated successfully' });
 
     } catch (error) {
@@ -295,7 +317,7 @@ app.get('/api/submissions/export/csv', async (req, res) => {
             'ID', 'Date de création', 'Statut', 'Nom complet', 'Téléphone', 'Email',
             'Rôle', 'Ville Agence', 'Manager Direct', 'Directeur', 'Animateur Réseau',
             'Date de début', 'Code équipe', 'Email gestionnaire', 'Email RH',
-            'Taille T-shirt', 'Test fibre effectué', 'Nom du mandataire', 'Conditions acceptées'
+            'Test fibre effectué', 'Nom du mandataire', 'Conditions acceptées'
         ];
 
         // Convert rows to CSV format
@@ -318,7 +340,6 @@ app.get('/api/submissions/export/csv', async (req, res) => {
                 row.team_code,
                 row.manager_email,
                 row.hr_email,
-                row.tshirt_size,
                 row.fiber_test_done ? 'Oui' : 'Non',
                 `"${row.proxy_name || ''}"`,
                 row.terms_accepted ? 'Oui' : 'Non'
@@ -365,7 +386,6 @@ app.get('/api/submissions/export/excel', async (req, res) => {
             'Code équipe': row.team_code,
             'Email gestionnaire': row.manager_email,
             'Email RH': row.hr_email,
-            'Taille T-shirt': row.tshirt_size,
             'Test fibre effectué': row.fiber_test_done ? 'Oui' : 'Non',
             'Nom du mandataire': row.proxy_name || '',
             'Conditions acceptées': row.terms_accepted ? 'Oui' : 'Non'
@@ -389,7 +409,6 @@ app.get('/api/submissions/export/excel', async (req, res) => {
             { wch: 15 }, // Code équipe
             { wch: 30 }, // Email gestionnaire
             { wch: 30 }, // Email RH
-            { wch: 12 }, // Taille T-shirt
             { wch: 20 }, // Test fibre effectué
             { wch: 25 }, // Nom du mandataire
             { wch: 20 }  // Conditions acceptées
