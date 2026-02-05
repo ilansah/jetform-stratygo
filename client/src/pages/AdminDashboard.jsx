@@ -598,23 +598,23 @@ const AdminDashboard = () => {
                                         className="max-w-full max-h-[70vh] rounded-lg shadow-lg object-contain"
                                     />
                                 ) : previewFile.type === 'pdf' ? (
-                                    <object
-                                        data={previewFile.url}
-                                        type="application/pdf"
-                                        className="w-full h-[70vh] rounded-lg shadow-md"
-                                    >
-                                        <div className="flex flex-col items-center justify-center h-full p-8 text-center text-gray-500 bg-white rounded-lg border-2 border-dashed border-gray-300">
-                                            <p className="mb-4">Impossible d'afficher le PDF directement.</p>
+                                    <div className="w-full h-full">
+                                        <div className="flex justify-center mb-4">
                                             <a
                                                 href={previewFile.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                                className="text-blue-600 hover:text-blue-800 underline flex items-center"
                                             >
-                                                Ouvrir le PDF dans un nouvel onglet
+                                                Ouvrir le PDF dans un nouvel onglet <Download size={16} className="ml-1" />
                                             </a>
                                         </div>
-                                    </object>
+                                        <iframe
+                                            src={previewFile.url}
+                                            className="w-full h-[65vh] rounded-lg border-2 border-gray-200"
+                                            title="PDF Preview"
+                                        />
+                                    </div>
                                 ) : (
                                     <div className="text-center p-8">
                                         <p className="text-gray-500 mb-4">Format non supporté pour la prévisualisation direct.</p>
