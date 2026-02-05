@@ -486,7 +486,7 @@ const AdminDashboard = () => {
                                             <div className="flex items-center space-x-2">
                                                 {sub.id_card_front_path && (
                                                     <button
-                                                        onClick={() => openPreview(sub.id_card_front_path, 'image')}
+                                                        onClick={() => openPreview(sub.id_card_front_path, 'pdf')}
                                                         className="p-2 hover:bg-blue-50 rounded transition-colors"
                                                         title="Carte d'identité recto"
                                                     >
@@ -495,7 +495,7 @@ const AdminDashboard = () => {
                                                 )}
                                                 {sub.id_card_back_path && (
                                                     <button
-                                                        onClick={() => openPreview(sub.id_card_back_path, 'image')}
+                                                        onClick={() => openPreview(sub.id_card_back_path, 'pdf')}
                                                         className="p-2 hover:bg-blue-50 rounded transition-colors"
                                                         title="Carte d'identité verso"
                                                     >
