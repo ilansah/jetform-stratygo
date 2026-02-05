@@ -88,11 +88,16 @@ const storage = multer.diskStorage({
 const upload = multer({
     storage: storage,
     fileFilter: (req, file, cb) => {
-        // Accept only PDF
+        // Allow PDF for documents
         if (file.mimetype === 'application/pdf') {
             cb(null, true);
-        } else {
-            cb(new Error('Seuls les fichiers PDF sont autorisés !'), false);
+        }
+        // Allow Images for signature and photo (if the user uploads an image for photo)
+        else if ((file.fieldname === 'signature' || file.fieldname === 'photo') && (file.mimetype === 'image/png' || file.mimetype === 'image/jpeg' || file.mimetype === 'image/jpg')) {
+            cb(null, true);
+        }
+        else {
+            cb(new Error(`Le fichier ${file.fieldname} doit être un PDF (ou une image pour la signature/photo) !`), false);
         }
     }
 });
@@ -434,6 +439,18 @@ app.get('/api/submissions/export/excel', async (req, res) => {
 // Catch-all route for React (Must be last)
 app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+});
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+    console.error('🔥 Global Error Handler:', err); // Log the full error
+    if (err instanceof multer.MulterError) {
+        return res.status(400).json({ error: 'Multer Error', details: err.message });
+    }
+    if (err.message === 'Seuls les fichiers PDF sont autorisés !' || err.message.includes('doit être un PDF')) {
+        return res.status(400).json({ error: 'Validation Error', details: err.message });
+    }
+    res.status(500).json({ error: 'Internal Server Error', details: err.message });
 });
 
 app.listen(PORT, () => {

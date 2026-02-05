@@ -90,10 +90,15 @@ try {
         copyRecursive(path.join(CLIENT_DIR, 'public', 'documents'), path.join(destClientPublic, 'documents'));
     }
 
-    // 5. Create .env file for manual fill or pre-filled
-    console.log('📝 Creating Production .env...');
-    const envContent = `DB_HOST=localhost\nDB_USER=u548879916_stratygo\nDB_PASSWORD=STRAT-jotform59\nDB_NAME=u548879916_jotform\nPORT=3000\n`;
-    fs.writeFileSync(path.join(PROD_DIR, '.env'), envContent);
+    // 5. Copy .env file from root
+    console.log('📝 Copying .env from root...');
+    if (fs.existsSync(path.join(PROJECT_ROOT, '.env'))) {
+        fs.copyFileSync(path.join(PROJECT_ROOT, '.env'), path.join(PROD_DIR, '.env'));
+    } else {
+        console.warn('⚠️ No .env file found in root! Creating default one...');
+        const envContent = `DB_HOST=127.0.0.1\nDB_USER=u548879916_stratygo59\nDB_PASSWORD=STRAT-jotform59\nDB_NAME=u548879916_jotform\nPORT=3000\nRESEND_API_KEY=YOUR_KEY_HERE`;
+        fs.writeFileSync(path.join(PROD_DIR, '.env'), envContent);
+    }
 
     // 6. Create uploads folder
     fs.mkdirSync(path.join(PROD_DIR, 'uploads'));
