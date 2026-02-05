@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Header from '../components/Header';
 import EditableCell from '../components/EditableCell';
 import { Eye, FileText, CheckCircle, Clock, Image as ImageIcon, Download, Search, FileSpreadsheet, XCircle, Trash2 } from 'lucide-react';
+import PdfPreview from '../components/PdfPreview';
 
 const AdminDashboard = () => {
     const [submissions, setSubmissions] = useState([]);
@@ -559,76 +560,66 @@ const AdminDashboard = () => {
 
                 {/* Preview Modal */}
                 {showPreview && previewFile && (
-                    <div
-                        className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
-                        onClick={() => setShowPreview(false)}
-                    >
+                    previewFile.type === 'pdf' ? (
+                        <PdfPreview
+                            url={previewFile.url}
+                            filename={previewFile.filename}
+                            onClose={() => setShowPreview(false)}
+                        />
+                    ) : (
                         <div
-                            className="bg-white rounded-2xl max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl"
-                            onClick={(e) => e.stopPropagation()}
+                            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+                            onClick={() => setShowPreview(false)}
                         >
-                            {/* Modal Header */}
-                            <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50">
-                                <h3 className="text-lg font-semibold" style={{ color: '#2d2d2d' }}>
-                                    Prévisualisation
-                                </h3>
-                                <div className="flex space-x-2">
-                                    <button
-                                        onClick={() => downloadFile(previewFile.filename)}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-                                    >
-                                        <Download size={16} />
-                                        <span>Télécharger</span>
-                                    </button>
-                                    <button
-                                        onClick={() => setShowPreview(false)}
-                                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                                    >
-                                        Fermer
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Modal Content */}
-                            <div className="p-6 overflow-auto max-h-[calc(90vh-80px)]">
-                                {previewFile.type === 'image' ? (
-                                    <img
-                                        src={previewFile.url}
-                                        alt="Preview"
-                                        className="max-w-full max-h-[70vh] rounded-lg shadow-lg object-contain"
-                                    />
-                                ) : previewFile.type === 'pdf' ? (
-                                    <div className="w-full h-full">
-                                        <div className="flex justify-center mb-4">
-                                            <a
-                                                href={previewFile.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-blue-600 hover:text-blue-800 underline flex items-center"
-                                            >
-                                                Ouvrir le PDF dans un nouvel onglet <Download size={16} className="ml-1" />
-                                            </a>
-                                        </div>
-                                        <iframe
-                                            src={previewFile.url}
-                                            className="w-full h-[65vh] rounded-lg border-2 border-gray-200"
-                                            title="PDF Preview"
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="text-center p-8">
-                                        <p className="text-gray-500 mb-4">Format non supporté pour la prévisualisation direct.</p>
+                            <div
+                                className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                {/* Modal Header */}
+                                <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50">
+                                    <h3 className="text-lg font-semibold" style={{ color: '#2d2d2d' }}>
+                                        Prévisualisation
+                                    </h3>
+                                    <div className="flex space-x-2">
                                         <button
                                             onClick={() => downloadFile(previewFile.filename)}
-                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
                                         >
-                                            Télécharger le fichier
+                                            <Download size={16} />
+                                            <span>Télécharger</span>
+                                        </button>
+                                        <button
+                                            onClick={() => setShowPreview(false)}
+                                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                                        >
+                                            Fermer
                                         </button>
                                     </div>
-                                )}
+                                </div>
+
+                                {/* Modal Content - Images only (PDFs handled by PdfPreview component) */}
+                                <div className="p-6 overflow-auto max-h-[calc(90vh-80px)] flex justify-center items-center bg-gray-100">
+                                    {previewFile.type === 'image' ? (
+                                        <img
+                                            src={previewFile.url}
+                                            alt="Preview"
+                                            className="max-w-full max-h-[70vh] rounded-lg shadow-lg object-contain"
+                                        />
+                                    ) : (
+                                        <div className="text-center p-8">
+                                            <p className="text-gray-500 mb-4">Format non supporté pour la prévisualisation direct.</p>
+                                            <button
+                                                onClick={() => downloadFile(previewFile.filename)}
+                                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                            >
+                                                Télécharger le fichier
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )
                 )}
 
                 {/* Refusal Reason Modal */}
