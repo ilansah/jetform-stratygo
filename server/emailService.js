@@ -1,8 +1,15 @@
 const { Resend } = require('resend');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const EMAIL_FROM = 'Service Accréditation <adv@stratygo.fr>';
+
+function getResendClient() {
+    const key = process.env.RESEND_API_KEY;
+    if (!key || !key.startsWith('re_')) {
+        console.warn('⚠️ RESEND_API_KEY is missing or invalid. Email sending will be disabled.');
+        return null;
+    }
+    return new Resend(key);
+}
 
 /**
  * Sends an approval email to the user.
@@ -11,6 +18,9 @@ const EMAIL_FROM = 'Service Accréditation <adv@stratygo.fr>';
  */
 async function sendApprovalEmail(to, name) {
     try {
+        const resend = getResendClient();
+        if (!resend) return { success: false, error: 'Missing API Key' };
+
         const { data, error } = await resend.emails.send({
             from: EMAIL_FROM,
             to: [to],
@@ -56,6 +66,9 @@ async function sendApprovalEmail(to, name) {
  */
 async function sendRefusalEmail(to, name, reason) {
     try {
+        const resend = getResendClient();
+        if (!resend) return { success: false, error: 'Missing API Key' };
+
         const { data, error } = await resend.emails.send({
             from: EMAIL_FROM,
             to: [to],
