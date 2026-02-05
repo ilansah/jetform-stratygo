@@ -142,7 +142,16 @@ const AdminDashboard = () => {
         }
     };
 
-    const openPreview = (filename, type) => {
+    const getFileType = (filename) => {
+        if (!filename) return 'unknown';
+        const ext = filename.split('.').pop().toLowerCase();
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return 'image';
+        if (ext === 'pdf') return 'pdf';
+        return 'unknown';
+    };
+
+    const openPreview = (filename) => {
+        const type = getFileType(filename);
         setPreviewFile({ url: `/uploads/${filename}`, type, filename });
         setShowPreview(true);
     };
@@ -586,15 +595,37 @@ const AdminDashboard = () => {
                                     <img
                                         src={previewFile.url}
                                         alt="Preview"
-                                        className="max-w-full h-auto mx-auto rounded-lg shadow-lg"
+                                        className="max-w-full max-h-[70vh] rounded-lg shadow-lg object-contain"
                                     />
                                 ) : previewFile.type === 'pdf' ? (
-                                    <iframe
-                                        src={previewFile.url}
-                                        className="w-full h-[70vh] rounded-lg border-2 border-gray-200"
-                                        title="PDF Preview"
-                                    />
-                                ) : null}
+                                    <object
+                                        data={previewFile.url}
+                                        type="application/pdf"
+                                        className="w-full h-[70vh] rounded-lg shadow-md"
+                                    >
+                                        <div className="flex flex-col items-center justify-center h-full p-8 text-center text-gray-500 bg-white rounded-lg border-2 border-dashed border-gray-300">
+                                            <p className="mb-4">Impossible d'afficher le PDF directement.</p>
+                                            <a
+                                                href={previewFile.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                            >
+                                                Ouvrir le PDF dans un nouvel onglet
+                                            </a>
+                                        </div>
+                                    </object>
+                                ) : (
+                                    <div className="text-center p-8">
+                                        <p className="text-gray-500 mb-4">Format non supporté pour la prévisualisation direct.</p>
+                                        <button
+                                            onClick={() => downloadFile(previewFile.filename)}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                        >
+                                            Télécharger le fichier
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
