@@ -89,7 +89,7 @@ const FileDropzone = ({ label, name, required, onFileChange, acceptedFileTypes =
                         <div className="text-sm text-gray-600">
                             <span className="text-stratygo-red font-semibold hover:underline">Cliquez pour uploader</span> ou glisser ici
                         </div>
-                        <p className="text-xs text-gray-400 font-medium">PNG, JPG ou PDF (Max 10MB)</p>
+                        <p className="text-xs text-gray-400 font-medium">PDF uniquement (Max 10MB)</p>
                     </div>
                 )}
             </div>
