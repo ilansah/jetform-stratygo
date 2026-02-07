@@ -369,18 +369,22 @@ const AdminDashboard = () => {
                                         <td className="px-4 py-3 whitespace-nowrap">
                                             {sub.photo_path ? (
                                                 <button
-                                                    onClick={() => openPreview(sub.photo_path, 'image')}
-                                                    className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 hover:border-blue-500 transition-colors"
+                                                    onClick={() => openPreview(sub.photo_path)}
+                                                    className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-200 hover:border-blue-500 transition-colors flex items-center justify-center bg-gray-50"
                                                 >
-                                                    <img
-                                                        src={`/uploads/${sub.photo_path}`}
-                                                        alt="Photo"
-                                                        className="w-full h-full object-cover"
-                                                    />
+                                                    {sub.photo_path.toLowerCase().endsWith('.pdf') ? (
+                                                        <FileText size={24} className="text-red-500" />
+                                                    ) : (
+                                                        <img
+                                                            src={`/uploads/${sub.photo_path}`}
+                                                            alt="Photo"
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    )}
                                                 </button>
                                             ) : (
-                                                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                                                    <ImageIcon size={16} className="text-gray-400" />
+                                                <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+                                                    <ImageIcon size={24} className="text-gray-400" />
                                                 </div>
                                             )}
                                         </td>
