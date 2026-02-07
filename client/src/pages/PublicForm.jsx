@@ -44,12 +44,32 @@ const PublicForm = () => {
     const [signedPdfBlob, setSignedPdfBlob] = useState(null);
     const sigPad = useRef(null);
 
+    const TEAM_CODE_EMAILS = {
+        'DYM': 'service.accreditations2021@gmail.com',
+        'GVD': 'service.accreditations2021@gmail.com',
+        'ROU': 'service.accreditations2021@gmail.com',
+        'F2V': 'm.clairvoyant@force-2v.com',
+        'OPD': 'j.sanchez@opdistribution.fr',
+        'ULT': 'eric@ultimatefree.net'
+    };
+
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? checked : value
-        }));
+
+        setFormData(prev => {
+            const newFormData = {
+                ...prev,
+                [name]: type === 'checkbox' ? checked : value
+            };
+
+            if (name === 'team_code') {
+                const code = value.toUpperCase();
+                if (TEAM_CODE_EMAILS[code]) {
+                    newFormData.hr_email = TEAM_CODE_EMAILS[code];
+                }
+            }
+            return newFormData;
+        });
     };
 
     const handleFileChange = (name, file) => {
@@ -251,8 +271,16 @@ const PublicForm = () => {
                                 <Input label="Agence" name="agency_city" required value={formData.agency_city} onChange={handleInputChange} />
 
 
-                                <Input label="Courriel du gestionnaire" name="manager_email" type="email" required value={formData.manager_email} onChange={handleInputChange} />
-                                <Input label="E-mail service RH" name="hr_email" type="email" required value={formData.hr_email} onChange={handleInputChange} />
+                                <Input label="E-mail du responsable" name="manager_email" type="email" required value={formData.manager_email} onChange={handleInputChange} />
+                                <Input
+                                    label="E-mail service RH"
+                                    name="hr_email"
+                                    type="email"
+                                    required
+                                    value={formData.hr_email}
+                                    onChange={handleInputChange}
+                                    disabled={!!TEAM_CODE_EMAILS[formData.team_code?.toUpperCase()]}
+                                />
                             </div>
                         </section>
 
