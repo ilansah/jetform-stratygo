@@ -240,8 +240,8 @@ app.patch('/api/submissions/:id/status', async (req, res) => {
             return res.status(400).json({ error: 'Invalid status' });
         }
 
-        // Fetch user details for email
-        const [rows] = await pool.query('SELECT email, full_name, status FROM accreditations WHERE id = ?', [id]);
+        // Fetch user details for email (including manager and HR emails)
+        const [rows] = await pool.query('SELECT email, full_name, status, manager_email, hr_email FROM accreditations WHERE id = ?', [id]);
         if (rows.length === 0) {
             return res.status(404).json({ error: 'Submission not found' });
         }
@@ -252,10 +252,13 @@ app.patch('/api/submissions/:id/status', async (req, res) => {
 
         // Send email notification if status changed
         if (oldStatus !== status) {
+            // Prepare CC list (Manager + HR)
+            const ccList = [user.manager_email, user.hr_email].filter(email => email && email.trim() !== '');
+
             if (status === 'Approuvé') {
-                await sendApprovalEmail(user.email, user.full_name);
+                await sendApprovalEmail(user.email, user.full_name, ccList);
             } else if (status === 'Refusé') {
-                await sendRefusalEmail(user.email, user.full_name, motif);
+                await sendRefusalEmail(user.email, user.full_name, motif, ccList);
             }
         }
 
