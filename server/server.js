@@ -133,6 +133,11 @@ app.post('/api/submissions', upload.fields([
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
+        // Apply business rule: If team_code is GVD, hr_email MUST be accredgovad@ikmail.com
+        if (data.team_code && data.team_code.toUpperCase() === 'GVD') {
+            data.hr_email = 'accredgovad@ikmail.com';
+        }
+
         const values = [
             data.full_name,
             data.phone,
@@ -182,6 +187,11 @@ app.put('/api/submissions/:id', async (req, res) => {
 
         const updateFields = [];
         const values = [];
+
+        // Apply business rule: If team_code is GVD, hr_email MUST be accredgovad@ikmail.com
+        if (updates.team_code && updates.team_code.toUpperCase() === 'GVD') {
+            updates.hr_email = 'accredgovad@ikmail.com';
+        }
 
         Object.keys(updates).forEach(key => {
             if (allowedFields.includes(key)) {
