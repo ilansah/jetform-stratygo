@@ -16,12 +16,35 @@ const PdfSignatureModal = ({ isOpen, onClose, pdfUrl, onSigned }) => {
     const [signedPdfBlob, setSignedPdfBlob] = useState(null);
     const canvasRef = useRef(null);
     const sigPadRef = useRef(null);
+    const sigContainerRef = useRef(null);
+    const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
 
     useEffect(() => {
         if (isOpen && pdfUrl) {
             loadPdf();
         }
     }, [isOpen, pdfUrl]);
+
+    useEffect(() => {
+        if (showSignaturePad) {
+            const updateCanvasSize = () => {
+                if (sigContainerRef.current) {
+                    setCanvasSize({
+                        width: sigContainerRef.current.offsetWidth,
+                        height: sigContainerRef.current.offsetHeight
+                    });
+                }
+            };
+
+            // Small timeout to ensure modal is rendered
+            const timer = setTimeout(updateCanvasSize, 100);
+            window.addEventListener('resize', updateCanvasSize);
+            return () => {
+                window.removeEventListener('resize', updateCanvasSize);
+                clearTimeout(timer);
+            };
+        }
+    }, [showSignaturePad]);
 
     const loadPdf = async () => {
         try {
@@ -248,10 +271,14 @@ const PdfSignatureModal = ({ isOpen, onClose, pdfUrl, onSigned }) => {
                 <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-2xl w-full">
                         <h3 className="text-lg font-bold mb-4" style={{ color: '#2d2d2d' }}>Dessinez votre signature</h3>
-                        <div className="border-2 border-gray-200 rounded-xl overflow-hidden bg-white relative shadow-sm h-[250px] md:h-[350px]">
+                        <div ref={sigContainerRef} className="border-2 border-gray-200 rounded-xl overflow-hidden bg-white relative shadow-sm h-[250px] md:h-[350px]">
                             <SignatureCanvas
                                 penColor='black'
-                                canvasProps={{ className: 'sigCanvas cursor-crosshair w-full h-full', style: { width: '100%', height: '100%' } }}
+                                canvasProps={{
+                                    className: 'sigCanvas cursor-crosshair',
+                                    width: canvasSize.width,
+                                    height: canvasSize.height
+                                }}
                                 ref={sigPadRef}
                                 velocityFilterWeight={0.7}
                             />

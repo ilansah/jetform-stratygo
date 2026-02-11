@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
@@ -42,6 +42,23 @@ const PublicForm = () => {
     const [showPdfModal, setShowPdfModal] = useState(false);
     const [signedPdfBlob, setSignedPdfBlob] = useState(null);
     const sigPad = useRef(null);
+    const sigContainerRef = useRef(null);
+    const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+
+    useEffect(() => {
+        const updateCanvasSize = () => {
+            if (sigContainerRef.current) {
+                setCanvasSize({
+                    width: sigContainerRef.current.offsetWidth,
+                    height: sigContainerRef.current.offsetHeight
+                });
+            }
+        };
+
+        updateCanvasSize();
+        window.addEventListener('resize', updateCanvasSize);
+        return () => window.removeEventListener('resize', updateCanvasSize);
+    }, []);
 
     const TEAM_CODE_EMAILS = {
         'DYM': 'service.accreditations2021@gmail.com',
@@ -364,10 +381,14 @@ const PublicForm = () => {
 
                                 <div>
                                     <label className="block text-sm font-bold text-stratygo-dark mb-3 uppercase tracking-wide">Votre Signature <span className="text-stratygo-dark">*</span></label>
-                                    <div className="border-2 border-gray-200 rounded-xl overflow-hidden bg-white relative shadow-sm hover:border-gray-300 transition-colors h-[250px] md:h-[350px]">
+                                    <div ref={sigContainerRef} className="border-2 border-gray-200 rounded-xl overflow-hidden bg-white relative shadow-sm hover:border-gray-300 transition-colors h-[250px] md:h-[350px]">
                                         <SignatureCanvas
                                             penColor='black'
-                                            canvasProps={{ className: 'sigCanvas cursor-crosshair w-full h-full', style: { width: '100%', height: '100%' } }}
+                                            canvasProps={{
+                                                className: 'sigCanvas cursor-crosshair',
+                                                width: canvasSize.width,
+                                                height: canvasSize.height
+                                            }}
                                             ref={sigPad}
                                             velocityFilterWeight={0.7}
                                         />
