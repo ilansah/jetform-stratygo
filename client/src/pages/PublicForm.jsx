@@ -46,8 +46,8 @@ const PublicForm = () => {
 
     const TEAM_CODE_EMAILS = {
         'DYM': 'service.accreditations2021@gmail.com',
-        'GVD': 'service.accreditations2021@gmail.com',
-        'ROU': 'service.accreditations2021@gmail.com',
+        'GVD': 'accredgovad@ikmail.com',
+        'ROU': 'accredgovad@ikmail.com',
         'F2V': 'm.clairvoyant@force-2v.com',
         'OPD': 'j.sanchez@opdistribution.fr',
         'ULT': 'eric@ultimatefree.net'
