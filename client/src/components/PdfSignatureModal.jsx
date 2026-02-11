@@ -229,11 +229,15 @@ const PdfSignatureModal = ({ isOpen, onClose, pdfUrl, onSigned }) => {
                         )}
                         <button
                             onClick={handleSignClick}
-                            className="px-6 py-3 rounded-xl font-semibold text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all"
-                            style={{ background: 'linear-gradient(to right, #2d2d2d, #1a1a1a)' }}
+                            disabled={currentPage < totalPages}
+                            className={`px-6 py-3 rounded-xl font-semibold shadow-lg transition-all flex items-center ${currentPage < totalPages
+                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none'
+                                    : 'text-white hover:shadow-xl hover:scale-[1.02]'
+                                }`}
+                            style={currentPage < totalPages ? {} : { background: 'linear-gradient(to right, #2d2d2d, #1a1a1a)' }}
                         >
                             <PenTool size={18} className="inline mr-2" />
-                            {signedPdfBlob ? 'Signer à nouveau' : 'Signer le document'}
+                            {signedPdfBlob ? 'Signer à nouveau' : (currentPage < totalPages ? `Lire jusqu'à la fin (${totalPages - currentPage} pages restants)` : 'Signer le document')}
                         </button>
                     </div>
                 </div>
@@ -247,7 +251,7 @@ const PdfSignatureModal = ({ isOpen, onClose, pdfUrl, onSigned }) => {
                         <div className="border-2 border-gray-200 rounded-xl overflow-hidden bg-white relative shadow-sm">
                             <SignatureCanvas
                                 penColor='black'
-                                canvasProps={{ className: 'sigCanvas cursor-crosshair', style: { width: '100%', height: '200px' } }}
+                                canvasProps={{ className: 'sigCanvas cursor-crosshair', style: { width: '100%', height: '400px' } }}
                                 ref={sigPadRef}
                                 velocityFilterWeight={0.7}
                             />
