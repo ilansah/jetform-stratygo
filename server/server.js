@@ -127,7 +127,7 @@ app.post('/api/submissions', upload.fields([
 
         const query = `
             INSERT INTO accreditations 
-            (full_name, phone, email, address, role, agency_city, direct_manager_name, director_name, network_animator_name, ch
+            (full_name, phone, email, address, role, agency_city, direct_manager_name, director_name, network_animator_name, 
              start_date, team_code, manager_email, hr_email, fiber_test_done, proxy_name, terms_accepted, 
              id_card_front_path, id_card_back_path, photo_path, signature_path, signed_pdf_path)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)

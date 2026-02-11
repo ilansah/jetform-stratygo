@@ -133,6 +133,11 @@ app.post('/api/submissions', upload.fields([
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
+        // Apply business rule: If team_code is GVD, hr_email MUST be accredgovad@ikmail.com
+        if (data.team_code && data.team_code.toUpperCase() === 'GVD') {
+            data.hr_email = 'accredgovad@ikmail.com';
+        }
+
         const values = [
             data.full_name,
             data.phone,
@@ -182,6 +187,11 @@ app.put('/api/submissions/:id', async (req, res) => {
 
         const updateFields = [];
         const values = [];
+
+        // Apply business rule: If team_code is GVD, hr_email MUST be accredgovad@ikmail.com
+        if (updates.team_code && updates.team_code.toUpperCase() === 'GVD') {
+            updates.hr_email = 'accredgovad@ikmail.com';
+        }
 
         Object.keys(updates).forEach(key => {
             if (allowedFields.includes(key)) {
@@ -240,8 +250,8 @@ app.patch('/api/submissions/:id/status', async (req, res) => {
             return res.status(400).json({ error: 'Invalid status' });
         }
 
-        // Fetch user details for email
-        const [rows] = await pool.query('SELECT email, full_name, status FROM accreditations WHERE id = ?', [id]);
+        // Fetch user details for email (including manager and HR emails)
+        const [rows] = await pool.query('SELECT email, full_name, status, manager_email, hr_email FROM accreditations WHERE id = ?', [id]);
         if (rows.length === 0) {
             return res.status(404).json({ error: 'Submission not found' });
         }
@@ -252,10 +262,13 @@ app.patch('/api/submissions/:id/status', async (req, res) => {
 
         // Send email notification if status changed
         if (oldStatus !== status) {
+            // Prepare CC list (Manager + HR)
+            const ccList = [user.manager_email, user.hr_email].filter(email => email && email.trim() !== '');
+
             if (status === 'Approuvé') {
-                await sendApprovalEmail(user.email, user.full_name);
+                await sendApprovalEmail(user.email, user.full_name, ccList);
             } else if (status === 'Refusé') {
-                await sendRefusalEmail(user.email, user.full_name, motif);
+                await sendRefusalEmail(user.email, user.full_name, motif, ccList);
             }
         }
 
@@ -443,7 +456,7 @@ app.get(/.*/, (req, res) => {
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-    console.error('🔥 Global Error Handler:', err); // Log the full error
+    console.error('🔥 Global Error Handler Triggered:', err.message); // Log the full error
     if (err instanceof multer.MulterError) {
         return res.status(400).json({ error: 'Multer Error', details: err.message });
     }
