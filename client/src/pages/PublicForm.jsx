@@ -367,7 +367,7 @@ const PublicForm = () => {
                                     <div className="border-2 border-gray-200 rounded-xl overflow-hidden bg-white relative shadow-sm hover:border-gray-300 transition-colors">
                                         <SignatureCanvas
                                             penColor='black'
-                                            canvasProps={{ className: 'sigCanvas cursor-crosshair h-[200px] md:h-[400px] w-full', style: { width: '100%' } }}
+                                            canvasProps={{ className: 'sigCanvas cursor-crosshair h-[350px] md:h-[450px] w-full', style: { width: '100%' } }}
                                             ref={sigPad}
                                             velocityFilterWeight={0.7}
                                         />
