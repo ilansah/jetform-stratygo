@@ -15,7 +15,6 @@ const PublicForm = () => {
         address_street: '',
         address_complement: '',
         address_city: '',
-        address_region: '',
         address_zip: '',
         role: '',
         agency_city: '',
@@ -101,7 +100,7 @@ const PublicForm = () => {
         form.append('full_name', formData.full_name);
         form.append('phone', formData.phone);
         form.append('email', formData.email);
-        form.append('address', `${formData.address_street}, ${formData.address_complement} ${formData.address_zip} ${formData.address_city}, ${formData.address_region}`);
+        form.append('address', `${formData.address_street}, ${formData.address_complement} ${formData.address_zip} ${formData.address_city}`);
         form.append('role', formData.role);
         form.append('agency_city', formData.agency_city);
         form.append('direct_manager_name', formData.direct_manager_name || '');
@@ -200,7 +199,6 @@ const PublicForm = () => {
                                         <Input name="address_complement" value={formData.address_complement} onChange={handleInputChange} placeholder="Complément (bat, étage...)" className="mb-0" showLabel={false} />
                                         <Input name="address_postal" required value={formData.address_zip} onChange={(e) => setFormData({ ...formData, address_zip: e.target.value })} placeholder="Code Postal" className="mb-0" showLabel={false} />
                                         <Input name="address_city" required value={formData.address_city} onChange={(e) => setFormData({ ...formData, address_city: e.target.value })} placeholder="Ville" className="mb-0" showLabel={false} />
-                                        <Input name="address_region" required value={formData.address_region} onChange={(e) => setFormData({ ...formData, address_region: e.target.value })} placeholder="État / Région" className="mb-0 md:col-span-2" showLabel={false} />
                                     </div>
                                 </div>
                             </div>
@@ -369,7 +367,7 @@ const PublicForm = () => {
                                     <div className="border-2 border-gray-200 rounded-xl overflow-hidden bg-white relative shadow-sm hover:border-gray-300 transition-colors">
                                         <SignatureCanvas
                                             penColor='black'
-                                            canvasProps={{ className: 'sigCanvas cursor-crosshair', style: { width: '100%', height: '200px' } }}
+                                            canvasProps={{ className: 'sigCanvas cursor-crosshair', style: { width: '100%', height: '400px' } }}
                                             ref={sigPad}
                                             velocityFilterWeight={0.7}
                                         />
