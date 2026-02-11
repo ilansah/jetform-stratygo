@@ -364,10 +364,10 @@ const PublicForm = () => {
 
                                 <div>
                                     <label className="block text-sm font-bold text-stratygo-dark mb-3 uppercase tracking-wide">Votre Signature <span className="text-stratygo-dark">*</span></label>
-                                    <div className="border-2 border-gray-200 rounded-xl overflow-hidden bg-white relative shadow-sm hover:border-gray-300 transition-colors">
+                                    <div className="border-2 border-gray-200 rounded-xl overflow-hidden bg-white relative shadow-sm hover:border-gray-300 transition-colors h-[350px] md:h-[450px]">
                                         <SignatureCanvas
                                             penColor='black'
-                                            canvasProps={{ className: 'sigCanvas cursor-crosshair h-[350px] md:h-[450px] w-full', style: { width: '100%' } }}
+                                            canvasProps={{ className: 'sigCanvas cursor-crosshair w-full h-full', style: { width: '100%', height: '100%' } }}
                                             ref={sigPad}
                                             velocityFilterWeight={0.7}
                                         />

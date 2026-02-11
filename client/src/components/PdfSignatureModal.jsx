@@ -248,10 +248,10 @@ const PdfSignatureModal = ({ isOpen, onClose, pdfUrl, onSigned }) => {
                 <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-2xl w-full">
                         <h3 className="text-lg font-bold mb-4" style={{ color: '#2d2d2d' }}>Dessinez votre signature</h3>
-                        <div className="border-2 border-gray-200 rounded-xl overflow-hidden bg-white relative shadow-sm">
+                        <div className="border-2 border-gray-200 rounded-xl overflow-hidden bg-white relative shadow-sm h-[350px] md:h-[450px]">
                             <SignatureCanvas
                                 penColor='black'
-                                canvasProps={{ className: 'sigCanvas cursor-crosshair h-[350px] md:h-[450px] w-full', style: { width: '100%' } }}
+                                canvasProps={{ className: 'sigCanvas cursor-crosshair w-full h-full', style: { width: '100%', height: '100%' } }}
                                 ref={sigPadRef}
                                 velocityFilterWeight={0.7}
                             />
