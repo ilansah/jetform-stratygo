@@ -231,8 +231,8 @@ const PdfSignatureModal = ({ isOpen, onClose, pdfUrl, onSigned }) => {
                             onClick={handleSignClick}
                             disabled={currentPage < totalPages}
                             className={`px-6 py-3 rounded-xl font-semibold shadow-lg transition-all flex items-center ${currentPage < totalPages
-                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none'
-                                    : 'text-white hover:shadow-xl hover:scale-[1.02]'
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none'
+                                : 'text-white hover:shadow-xl hover:scale-[1.02]'
                                 }`}
                             style={currentPage < totalPages ? {} : { background: 'linear-gradient(to right, #2d2d2d, #1a1a1a)' }}
                         >
@@ -251,7 +251,7 @@ const PdfSignatureModal = ({ isOpen, onClose, pdfUrl, onSigned }) => {
                         <div className="border-2 border-gray-200 rounded-xl overflow-hidden bg-white relative shadow-sm">
                             <SignatureCanvas
                                 penColor='black'
-                                canvasProps={{ className: 'sigCanvas cursor-crosshair', style: { width: '100%', height: '400px' } }}
+                                canvasProps={{ className: 'sigCanvas cursor-crosshair h-[200px] md:h-[400px] w-full', style: { width: '100%' } }}
                                 ref={sigPadRef}
                                 velocityFilterWeight={0.7}
                             />
