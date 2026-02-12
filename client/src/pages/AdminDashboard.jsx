@@ -343,6 +343,7 @@ const AdminDashboard = () => {
                                     <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Téléphone</th>
                                     <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Email</th>
                                     <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Rôle</th>
+                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Type Contrat</th>
                                     <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Ville Agence</th>
                                     <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Manager</th>
                                     <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Directeur</th>
@@ -449,6 +450,16 @@ const AdminDashboard = () => {
                                                 onSave={(value) => updateField(sub.id, 'role', value)}
                                                 type="select"
                                                 options={['Vendeur', 'Manager', 'Directeur', 'Animateur Réseau']}
+                                            />
+                                        </td>
+
+                                        {/* Type Contrat */}
+                                        <td className="px-4 py-3 min-w-[150px]">
+                                            <EditableCell
+                                                value={sub.contract_type || '-'}
+                                                onSave={(value) => updateField(sub.id, 'contract_type', value)}
+                                                type="select"
+                                                options={['VRP', 'VDI', 'CDI/CDD', 'Auto-entrepreneur']}
                                             />
                                         </td>
 
