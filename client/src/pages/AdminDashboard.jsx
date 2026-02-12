@@ -3,6 +3,8 @@ import Header from '../components/Header';
 import EditableCell from '../components/EditableCell';
 import { Eye, FileText, CheckCircle, Clock, Image as ImageIcon, Download, Search, FileSpreadsheet, XCircle, Trash2 } from 'lucide-react';
 import PdfPreview from '../components/PdfPreview';
+import fibreIcon from '../assets/telecoms.png';
+import energieIcon from '../assets/picto_energie.png';
 
 const AdminDashboard = () => {
     const [submissions, setSubmissions] = useState([]);
@@ -273,7 +275,7 @@ const AdminDashboard = () => {
                             : 'bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-900'
                             }`}
                     >
-                        <span>🌐</span>
+                        <span><img src={fibreIcon} alt="Fibre" className="w-6 h-6 object-contain" /></span>
                         <span>Fibre</span>
                     </button>
                     <button
@@ -283,7 +285,7 @@ const AdminDashboard = () => {
                             : 'bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-900'
                             }`}
                     >
-                        <span>⚡</span>
+                        <span><img src={energieIcon} alt="Energie" className="w-6 h-6 object-contain" /></span>
                         <span>Energie</span>
                     </button>
                 </div>
