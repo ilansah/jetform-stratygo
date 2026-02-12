@@ -67,6 +67,7 @@ const PdfSignatureModal = ({ isOpen, onClose, pdfUrl, onSigned }) => {
     const renderPage = async (pdf, pageNumber) => {
         const page = await pdf.getPage(pageNumber);
         const canvas = canvasRef.current;
+        if (!canvas) return; // Prevention of null access
         const context = canvas.getContext('2d');
 
         // Calculate scale to fit the container width

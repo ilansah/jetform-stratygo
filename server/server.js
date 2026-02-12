@@ -158,7 +158,7 @@ app.post('/api/submissions', upload.fields([
             data.team_code,
             data.manager_email,
             data.hr_email,
-            data.fiber_test_done === 'true' || data.fiber_test_done === true,
+            data.fiber_test_done || false, // Default to false if missing
             data.proxy_name || null,
             data.terms_accepted === 'true' || data.terms_accepted === true,
             id_card_front_path,
