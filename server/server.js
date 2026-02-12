@@ -466,8 +466,6 @@ app.get('/api/submissions/export/excel', async (req, res) => {
         console.error('Error exporting Excel:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
-    console.error('Error exporting Excel:', error);
-    res.status(500).json({ error: 'Internal server error' });
 }
 });
 
