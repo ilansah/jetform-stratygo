@@ -6,6 +6,8 @@ import FileDropzone from '../components/ui/FileDropzone';
 import Header from '../components/Header';
 import PdfSignatureModal from '../components/PdfSignatureModal';
 import { CheckCircle2, AlertCircle, FileText, User, Briefcase, Paperclip, PenTool } from 'lucide-react';
+import fibreIcon from '../assets/telecoms.png';
+import energieIcon from '../assets/picto_energie.png';
 
 const PublicForm = () => {
     const [formData, setFormData] = useState({
@@ -221,8 +223,8 @@ const PublicForm = () => {
                             >
                                 <div className="absolute inset-0 bg-gradient-to-br from-red-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                 <div className="relative z-10 flex flex-col items-center">
-                                    <div className="w-20 h-20 bg-red-100 text-stratygo-red rounded-full flex items-center justify-center mb-6 text-3xl shadow-sm group-hover:scale-110 transition-transform duration-300">
-                                        🌐
+                                    <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform duration-300 overflow-hidden">
+                                        <img src={fibreIcon} alt="Fibre" className="w-full h-full object-cover" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-gray-800 mb-2">Fibre</h2>
                                     <p className="text-gray-500">Accréditation pour les vendeurs Fibre Optique</p>
@@ -235,8 +237,8 @@ const PublicForm = () => {
                             >
                                 <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                 <div className="relative z-10 flex flex-col items-center">
-                                    <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6 text-3xl shadow-sm group-hover:scale-110 transition-transform duration-300">
-                                        ⚡
+                                    <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform duration-300 overflow-hidden">
+                                        <img src={energieIcon} alt="Energie" className="w-full h-full object-cover" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-gray-800 mb-2">Energie</h2>
                                     <p className="text-gray-500">Accréditation pour les vendeurs Energie</p>
