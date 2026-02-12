@@ -87,24 +87,34 @@ const AdminDashboard = () => {
     const [selectedSubmissionId, setSelectedSubmissionId] = useState(null);
     const [refusalReason, setRefusalReason] = useState('');
 
-    const deleteSubmission = async (id) => {
-        if (!confirm('Êtes-vous sûr de vouloir supprimer cette demande ? Cette action est irréversible.')) {
+    const deleteSubmissionsByType = async (type) => {
+        const count = submissions.filter(sub => (sub.type || 'Fibre') === type).length;
+        if (count === 0) {
+            alert(`Aucune donnée ${type} à supprimer.`);
+            return;
+        }
+
+        if (!confirm(`ATTENTION : Vous êtes sur le point de supprimer TOUTES les ${count} demandes "${type}".\n\nCette action est IRRÉVERSIBLE et supprimera également tous les fichiers associés.\n\nVoulez-vous vraiment continuer ?`)) {
+            return;
+        }
+
+        if (!confirm(`Êtes-vous VRAIMENT sûr ?\n\nConfirmez la suppression IMMÉDIATE et DÉFINITIVE de ${count} dossiers ${type}.`)) {
             return;
         }
 
         try {
-            const response = await fetch(`/api/submissions/${id}`, {
+            const response = await fetch(`/api/submissions/type/${type}`, {
                 method: 'DELETE',
             });
 
             if (response.ok) {
-                setSubmissions(submissions.filter(sub => sub.id !== id));
-                alert('Demande supprimée avec succès');
+                setSubmissions(submissions.filter(sub => (sub.type || 'Fibre') !== type));
+                alert(`Toutes les données ${type} ont été supprimées.`);
             } else {
                 alert('Erreur lors de la suppression');
             }
         } catch (error) {
-            console.error('Error deleting submission:', error);
+            console.error('Error deleting type:', error);
             alert('Erreur lors de la suppression');
         }
     };
@@ -326,6 +336,18 @@ const AdminDashboard = () => {
                                 <span>Excel</span>
                             </button>
                         </div>
+
+                        {/* Bulk Delete Button - Specific to Active Tab */}
+                        <div className="border-l border-gray-200 pl-4 ml-2">
+                            <button
+                                onClick={() => deleteSubmissionsByType(activeTab)}
+                                className="px-6 py-3 bg-red-50 text-red-600 border border-red-200 rounded-xl font-semibold hover:bg-red-600 hover:text-white transition-all flex items-center space-x-2 shadow-sm hover:shadow-md"
+                                title={`Supprimer TOTALE de tous les dossiers ${activeTab}`}
+                            >
+                                <Trash2 size={20} />
+                                <span>Vider {activeTab}</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -350,7 +372,9 @@ const AdminDashboard = () => {
                                     <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Animateur</th>
                                     <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Date Début</th>
                                     <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Code Équipe</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Test Fibre</th>
+                                    {activeTab === 'Fibre' && (
+                                        <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Test Fibre</th>
+                                    )}
                                     <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Documents</th>
                                     <th className="px-4 py-4 text-center text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Actions</th>
                                 </tr>
@@ -520,17 +544,19 @@ const AdminDashboard = () => {
 
 
                                         {/* Test Fibre */}
-                                        <td className="px-4 py-3 whitespace-nowrap text-center">
-                                            <button
-                                                onClick={() => updateField(sub.id, 'fiber_test_done', !sub.fiber_test_done)}
-                                                className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${sub.fiber_test_done
-                                                    ? 'bg-green-500 border-green-500'
-                                                    : 'bg-white border-gray-300 hover:border-gray-400'
-                                                    }`}
-                                            >
-                                                {sub.fiber_test_done && <CheckCircle size={14} className="text-white" />}
-                                            </button>
-                                        </td>
+                                        {activeTab === 'Fibre' && (
+                                            <td className="px-4 py-3 whitespace-nowrap text-center">
+                                                <button
+                                                    onClick={() => updateField(sub.id, 'fiber_test_done', !sub.fiber_test_done)}
+                                                    className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${sub.fiber_test_done
+                                                        ? 'bg-green-500 border-green-500'
+                                                        : 'bg-white border-gray-300 hover:border-gray-400'
+                                                        }`}
+                                                >
+                                                    {sub.fiber_test_done && <CheckCircle size={14} className="text-white" />}
+                                                </button>
+                                            </td>
+                                        )}
 
                                         {/* Documents */}
                                         <td className="px-4 py-3 whitespace-nowrap">

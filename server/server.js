@@ -320,7 +320,8 @@ app.delete('/api/submissions/:id', async (req, res) => {
             submission.id_card_back_path,
             submission.photo_path,
             submission.signature_path,
-            submission.signed_pdf_path
+            submission.signed_pdf_path,
+            submission.signed_charte_path
         ].filter(Boolean);
 
         filePaths.forEach(filePath => {
@@ -337,6 +338,58 @@ app.delete('/api/submissions/:id', async (req, res) => {
 
     } catch (error) {
         console.error('Error deleting submission:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// 4.5 Bulk Delete by Type (Admin)
+app.delete('/api/submissions/type/:type', async (req, res) => {
+    try {
+        const { type } = req.params;
+
+        // Validation
+        if (!['Fibre', 'Energie'].includes(type)) {
+            return res.status(400).json({ error: 'Invalid type' });
+        }
+
+        // Get all files to delete first
+        const [rows] = await pool.query('SELECT * FROM accreditations WHERE type = ?', [type]);
+
+        if (rows.length === 0) {
+            return res.status(404).json({ error: 'No submissions found for this type' });
+        }
+
+        // Delete files
+        rows.forEach(submission => {
+            const filePaths = [
+                submission.id_card_front_path,
+                submission.id_card_back_path,
+                submission.photo_path,
+                submission.signature_path,
+                submission.signed_pdf_path,
+                submission.signed_charte_path
+            ].filter(Boolean);
+
+            filePaths.forEach(filePath => {
+                const fullPath = path.join(__dirname, '../uploads', filePath);
+                if (fs.existsSync(fullPath)) {
+                    // Use try-catch for individual file deletion to not break the loop
+                    try {
+                        fs.unlinkSync(fullPath);
+                    } catch (err) {
+                        console.warn(`Could not delete file: ${fullPath}`);
+                    }
+                }
+            });
+        });
+
+        // Delete from database
+        await pool.execute('DELETE FROM accreditations WHERE type = ?', [type]);
+
+        res.json({ message: `All ${type} submissions and files have been deleted.` });
+
+    } catch (error) {
+        console.error('Error in bulk delete:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
