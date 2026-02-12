@@ -466,6 +466,43 @@ app.get('/api/submissions/export/excel', async (req, res) => {
         console.error('Error exporting Excel:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
+    console.error('Error exporting Excel:', error);
+    res.status(500).json({ error: 'Internal server error' });
+}
+});
+
+// --- Remote Database Maintenance (Run this to fix schema) ---
+app.get('/api/maintenance/migrate', async (req, res) => {
+    const results = [];
+
+    // Helper to run query and catch error
+    const runMigration = async (label, query) => {
+        try {
+            await pool.query(query);
+            results.push(`✅ ${label}: Success`);
+        } catch (err) {
+            // Ignore "Duplicate column name" error (code 1060)
+            if (err.code === 'ER_DUP_FIELDNAME' || err.errno === 1060) {
+                results.push(`ℹ️ ${label}: Already exists`);
+            } else {
+                results.push(`❌ ${label}: Failed - ${err.message}`);
+            }
+        }
+    };
+
+    try {
+        await runMigration('Add type column', "ALTER TABLE accreditations ADD COLUMN type ENUM('Fibre', 'Energie') DEFAULT 'Fibre' AFTER status");
+        await runMigration('Add contract_type column', "ALTER TABLE accreditations ADD COLUMN contract_type VARCHAR(50) AFTER role");
+        await runMigration('Add signed_charte_path column', "ALTER TABLE accreditations ADD COLUMN signed_charte_path VARCHAR(255) AFTER signed_pdf_path");
+        await runMigration('Set fiber_test_done default', "ALTER TABLE accreditations MODIFY COLUMN fiber_test_done BOOLEAN NOT NULL DEFAULT 0");
+
+        res.json({
+            message: 'Migration attempted',
+            results
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Migration script error', details: error.message });
+    }
 });
 
 // Start Server
