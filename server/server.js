@@ -110,7 +110,8 @@ app.post('/api/submissions', upload.fields([
     { name: 'id_card_back', maxCount: 1 },
     { name: 'photo', maxCount: 1 },
     { name: 'signature', maxCount: 1 },
-    { name: 'signed_pdf', maxCount: 1 }
+    { name: 'signed_pdf', maxCount: 1 },
+    { name: 'signed_charte', maxCount: 1 }
 ]), async (req, res) => {
     try {
         const data = req.body;
@@ -125,12 +126,16 @@ app.post('/api/submissions', upload.fields([
         const signature_path = files['signature'] ? files['signature'][0].filename : null;
         const signed_pdf_path = files['signed_pdf'] ? files['signed_pdf'][0].filename : null;
 
+        const validTypes = ['Fibre', 'Energie'];
+        const submissionType = validTypes.includes(data.type) ? data.type : 'Fibre';
+        const signed_charte_path = files['signed_charte'] ? files['signed_charte'][0].filename : null;
+
         const query = `
             INSERT INTO accreditations 
             (full_name, phone, email, address, role, agency_city, direct_manager_name, director_name, network_animator_name, 
              start_date, team_code, manager_email, hr_email, fiber_test_done, proxy_name, terms_accepted, 
-             id_card_front_path, id_card_back_path, photo_path, signature_path, signed_pdf_path)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             id_card_front_path, id_card_back_path, photo_path, signature_path, signed_pdf_path, type, signed_charte_path)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         // Apply business rule: If team_code is GVD, hr_email MUST be accredgovad@ikmail.com
@@ -159,7 +164,9 @@ app.post('/api/submissions', upload.fields([
             id_card_back_path,
             photo_path,
             signature_path,
-            signed_pdf_path
+            signed_pdf_path,
+            submissionType,
+            signed_charte_path
         ];
 
         const [result] = await pool.execute(query, values);
@@ -466,6 +473,7 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Internal Server Error', details: err.message });
 });
 
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });

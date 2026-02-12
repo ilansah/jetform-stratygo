@@ -36,7 +36,7 @@ async function sendApprovalEmail(to, name, cc = []) {
                     </div>
                     <p>Bonjour <strong>${name}</strong>,</p>
                     <p>Nous avons le plaisir de vous informer que votre demande d'accréditation a été <strong>validée</strong>.</p>
-                    <p>Vous pouvez dès à présent accéder à vos outils et commencer votre activité.</p>
+                    <p>Après réception de votre identifiant et de votre mot de passe, vous pourrez accéder à vos outils et commencer votre activité.</p>
                     <div style="margin: 30px 0; padding: 15px; background-color: #f0fdf4; border-left: 4px solid #2d8a5b; border-radius: 4px;">
                         <p style="margin: 0; font-weight: bold; color: #166534;">Votre statut est maintenant : Approuvé</p>
                     </div>
