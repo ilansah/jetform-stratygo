@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS accreditations (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     status ENUM('En Cours', 'Approuvé', 'Refusé') DEFAULT 'En Cours',
     type ENUM('Fibre', 'Energie') DEFAULT 'Fibre',
+    contract_type VARCHAR(50),
     
     -- Personal Info
     full_name VARCHAR(255) NOT NULL,

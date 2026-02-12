@@ -132,10 +132,10 @@ app.post('/api/submissions', upload.fields([
 
         const query = `
             INSERT INTO accreditations 
-            (full_name, phone, email, address, role, agency_city, direct_manager_name, director_name, network_animator_name, 
+            (full_name, phone, email, address, role, contract_type, agency_city, direct_manager_name, director_name, network_animator_name, 
              start_date, team_code, manager_email, hr_email, fiber_test_done, proxy_name, terms_accepted, 
              id_card_front_path, id_card_back_path, photo_path, signature_path, signed_pdf_path, type, signed_charte_path)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         // Apply business rule: If team_code is GVD, hr_email MUST be accredgovad@ikmail.com
@@ -149,6 +149,7 @@ app.post('/api/submissions', upload.fields([
             data.email,
             data.address,
             data.role,
+            data.contract_type, // Added contract_type
             data.agency_city,
             data.direct_manager_name || null,
             data.director_name || null,

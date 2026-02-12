@@ -28,6 +28,7 @@ const PublicForm = () => {
         fiber_test_done: false,
         proxy_name: '',
         terms_accepted: false,
+        contract_type: '', // Added contract_type
     });
 
     const [files, setFiles] = useState({
@@ -63,7 +64,7 @@ const PublicForm = () => {
         updateCanvasSize();
         window.addEventListener('resize', updateCanvasSize);
         return () => window.removeEventListener('resize', updateCanvasSize);
-    }, []);
+    }, [formType]); // Added formType dependency to resize canvas when form appears
 
     const TEAM_CODE_EMAILS = {
         'DYM': 'service.accreditations2021@gmail.com',
@@ -129,7 +130,8 @@ const PublicForm = () => {
         form.append('phone', formData.phone);
         form.append('email', formData.email);
         form.append('address', `${formData.address_street}, ${formData.address_complement} ${formData.address_zip} ${formData.address_city}`);
-        form.append('role', formData.role);
+        form.append('contract_type', formData.contract_type);
+        form.append('role', 'Vendeur'); // Hardcoded role
         form.append('agency_city', formData.agency_city);
         form.append('direct_manager_name', formData.direct_manager_name || '');
         form.append('director_name', formData.director_name || '');
@@ -138,7 +140,7 @@ const PublicForm = () => {
         form.append('team_code', formData.team_code);
         form.append('manager_email', formData.manager_email);
         form.append('hr_email', formData.hr_email);
-        form.append('fiber_test_done', formData.fiber_test_done);
+        // Removed fiber_test_done
         form.append('proxy_name', formData.proxy_name);
         form.append('terms_accepted', formData.terms_accepted);
 
@@ -300,24 +302,24 @@ const PublicForm = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-0 md:pl-14">
                                     <Input label="Date de commencement" name="start_date" type="date" required value={formData.start_date} onChange={handleInputChange} />
 
-                                    {/* Role Selection */}
+                                    {/* Contract Type Selection (Replaces Role) */}
                                     <div className="mb-6 group">
                                         <label className="block text-sm font-semibold text-stratygo-dark mb-2 ml-1 transition-colors group-hover:text-stratygo-dark">
-                                            Rôle <span className="text-stratygo-dark">*</span>
+                                            Type de contrat du vendeur <span className="text-stratygo-dark">*</span>
                                         </label>
                                         <div className="relative">
                                             <select
-                                                name="role"
-                                                value={formData.role}
+                                                name="contract_type"
+                                                value={formData.contract_type}
                                                 onChange={handleInputChange}
                                                 required
                                                 className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-stratygo-dark/10 focus:border-stratygo-dark focus:bg-white transition-all duration-300 shadow-sm appearance-none cursor-pointer"
                                             >
-                                                <option value="">Sélectionnez votre rôle</option>
-                                                <option value="Vendeur">Vendeur</option>
-                                                <option value="Manager">Manager</option>
-                                                <option value="Directeur">Directeur</option>
-                                                <option value="Animateur Réseau">Animateur Réseau</option>
+                                                <option value="">Sélectionnez votre type de contrat</option>
+                                                <option value="VRP">VRP</option>
+                                                <option value="VDI">VDI</option>
+                                                <option value="CDI/CDD">CDI/CDD</option>
+                                                <option value="Auto-entrepreneur">Auto-entrepreneur</option>
                                             </select>
                                             <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
                                                 <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" fillRule="evenodd"></path></svg>
@@ -325,27 +327,10 @@ const PublicForm = () => {
                                         </div>
                                     </div>
 
-
-
-                                    {/* Conditional Hierarchy Fields */}
-                                    {formData.role === 'Vendeur' && (
-                                        <>
-                                            <Input label="Nom du Manager" name="direct_manager_name" required value={formData.direct_manager_name} onChange={handleInputChange} />
-                                            <Input label="Nom du Directeur" name="director_name" required value={formData.director_name} onChange={handleInputChange} />
-                                            <Input label="Nom de l'Animateur Réseau" name="network_animator_name" required value={formData.network_animator_name} onChange={handleInputChange} />
-                                        </>
-                                    )}
-
-                                    {formData.role === 'Manager' && (
-                                        <>
-                                            <Input label="Nom du Directeur" name="director_name" required value={formData.director_name} onChange={handleInputChange} />
-                                            <Input label="Nom de l'Animateur Réseau" name="network_animator_name" required value={formData.network_animator_name} onChange={handleInputChange} />
-                                        </>
-                                    )}
-
-                                    {formData.role === 'Directeur' && (
-                                        <Input label="Nom de l'Animateur Réseau" name="network_animator_name" required value={formData.network_animator_name} onChange={handleInputChange} />
-                                    )}
+                                    {/* Always show hierarchy fields as Role is implicitly Vendeur */}
+                                    <Input label="Nom du Manager" name="direct_manager_name" required value={formData.direct_manager_name} onChange={handleInputChange} />
+                                    <Input label="Nom du Directeur" name="director_name" required value={formData.director_name} onChange={handleInputChange} />
+                                    <Input label="Nom de l'Animateur Réseau" name="network_animator_name" required value={formData.network_animator_name} onChange={handleInputChange} />
 
                                     <Input label="Code équipe" name="team_code" required value={formData.team_code} onChange={handleInputChange} />
                                     <Input label="Agence" name="agency_city" required value={formData.agency_city} onChange={handleInputChange} />
@@ -398,12 +383,7 @@ const PublicForm = () => {
                                 </div>
 
                                 <div className="pl-0 md:pl-14 space-y-6">
-                                    <div className="flex items-center space-x-3 p-4 rounded-xl border border-gray-200 hover:bg-white hover:shadow-sm transition-all duration-200 cursor-pointer" style={{ backgroundColor: 'rgba(245, 245, 245, 0.3)' }} onClick={() => handleInputChange({ target: { name: 'fiber_test_done', checked: !formData.fiber_test_done, type: 'checkbox' } })}>
-                                        <div className="w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors" style={formData.fiber_test_done ? { backgroundColor: '#2d2d2d', borderColor: '#2d2d2d' } : { borderColor: '#d1d5db', backgroundColor: '#ffffff' }}>
-                                            {formData.fiber_test_done && <CheckCircle2 size={16} style={{ color: '#ffffff' }} />}
-                                        </div>
-                                        <label className="font-medium cursor-pointer select-none" style={{ color: '#2d2d2d' }}>Je certifie avoir réalisé le test fibre.</label>
-                                    </div>
+                                    {/* Fiber Test Removed */}
 
                                     <Input label="Nom et prénom du demandeur si réalisé par un tiers" name="proxy_name" value={formData.proxy_name} onChange={handleInputChange} required={false} placeholder="Laisser vide si vous remplissez pour vous-même" />
 
