@@ -11,6 +11,7 @@ const AdminDashboard = () => {
     const [statusFilter, setStatusFilter] = useState('all');
     const [previewFile, setPreviewFile] = useState(null);
     const [showPreview, setShowPreview] = useState(false);
+    const [activeTab, setActiveTab] = useState('Fibre');
 
     // Auth state
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -176,6 +177,7 @@ const AdminDashboard = () => {
     };
 
     const filteredSubmissions = submissions.filter(sub => {
+        const matchesType = (sub.type || 'Fibre') === activeTab;
         const matchesSearch = !searchTerm ||
             sub.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             sub.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -183,7 +185,7 @@ const AdminDashboard = () => {
 
         const matchesStatus = statusFilter === 'all' || sub.status === statusFilter;
 
-        return matchesSearch && matchesStatus;
+        return matchesType && matchesSearch && matchesStatus;
     });
 
     if (!isAuthenticated) {
@@ -250,6 +252,30 @@ const AdminDashboard = () => {
                     <p className="text-lg" style={{ color: '#4a4a4a' }}>
                         {filteredSubmissions.length} accréditation{filteredSubmissions.length > 1 ? 's' : ''}
                     </p>
+                </div>
+
+                {/* Tabs Section */}
+                <div className="flex space-x-4 mb-6">
+                    <button
+                        onClick={() => setActiveTab('Fibre')}
+                        className={`px-6 py-3 rounded-xl font-bold transition-all flex items-center space-x-2 ${activeTab === 'Fibre'
+                            ? 'bg-[#2d2d2d] text-white shadow-lg transform scale-105'
+                            : 'bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                            }`}
+                    >
+                        <span>🌐</span>
+                        <span>Fibre</span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('Energie')}
+                        className={`px-6 py-3 rounded-xl font-bold transition-all flex items-center space-x-2 ${activeTab === 'Energie'
+                            ? 'bg-green-600 text-white shadow-lg transform scale-105'
+                            : 'bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                            }`}
+                    >
+                        <span>⚡</span>
+                        <span>Energie</span>
+                    </button>
                 </div>
 
                 {/* Filters Section */}
@@ -532,6 +558,15 @@ const AdminDashboard = () => {
                                                         title="PDF signé"
                                                     >
                                                         <Download size={16} style={{ color: '#e63946' }} />
+                                                    </button>
+                                                )}
+                                                {sub.signed_charte_path && (
+                                                    <button
+                                                        onClick={() => openPreview(sub.signed_charte_path, 'pdf')}
+                                                        className="p-2 hover:bg-amber-50 rounded transition-colors"
+                                                        title="Charte signée"
+                                                    >
+                                                        <FileText size={16} style={{ color: '#d97706' }} />
                                                     </button>
                                                 )}
                                             </div>
