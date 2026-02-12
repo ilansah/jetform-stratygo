@@ -328,24 +328,54 @@ const PublicForm = () => {
                                     </div>
 
                                     {/* Always show hierarchy fields as Role is implicitly Vendeur */}
-                                    <Input label="Nom du Manager" name="direct_manager_name" required value={formData.direct_manager_name} onChange={handleInputChange} />
-                                    <Input label="Nom du Directeur" name="director_name" required value={formData.director_name} onChange={handleInputChange} />
-                                    <Input label="Nom de l'Animateur Réseau" name="network_animator_name" required value={formData.network_animator_name} onChange={handleInputChange} />
-
-                                    <Input label="Code équipe" name="team_code" required value={formData.team_code} onChange={handleInputChange} />
-                                    <Input label="Agence" name="agency_city" required value={formData.agency_city} onChange={handleInputChange} />
-
-
-                                    <Input label="E-mail du responsable" name="manager_email" type="email" required value={formData.manager_email} onChange={handleInputChange} />
                                     <Input
-                                        label="E-mail service RH"
-                                        name="hr_email"
+                                        label={formType === 'Energie' ? "Manager" : "Nom du Manager"}
+                                        name="direct_manager_name"
+                                        required
+                                        value={formData.direct_manager_name}
+                                        onChange={handleInputChange}
+                                    />
+
+                                    {formType !== 'Energie' && (
+                                        <>
+                                            <Input label="Nom du Directeur" name="director_name" required value={formData.director_name} onChange={handleInputChange} />
+                                            <Input label="Nom de l'Animateur Réseau" name="network_animator_name" required value={formData.network_animator_name} onChange={handleInputChange} />
+                                        </>
+                                    )}
+
+                                    <Input
+                                        label={formType === 'Energie' ? "TEAM" : "Code équipe"}
+                                        name="team_code"
+                                        required
+                                        value={formData.team_code}
+                                        onChange={handleInputChange}
+                                        placeholder={formType === 'Energie' ? "3 Lettres" : ""}
+                                    />
+
+                                    {formType !== 'Energie' && (
+                                        <Input label="Agence" name="agency_city" required value={formData.agency_city} onChange={handleInputChange} />
+                                    )}
+
+                                    <Input
+                                        label={formType === 'Energie' ? "Email du Manager" : "E-mail du responsable"}
+                                        name="manager_email"
                                         type="email"
                                         required
-                                        value={formData.hr_email}
+                                        value={formData.manager_email}
                                         onChange={handleInputChange}
-                                        disabled={!!TEAM_CODE_EMAILS[formData.team_code?.toUpperCase()]}
                                     />
+
+                                    {formType !== 'Energie' && (
+                                        <Input
+                                            label="E-mail service RH"
+                                            name="hr_email"
+                                            type="email"
+                                            required
+                                            value={formData.hr_email}
+                                            onChange={handleInputChange}
+                                            disabled={!!TEAM_CODE_EMAILS[formData.team_code?.toUpperCase()]}
+                                        />
+                                    )}
                                 </div>
                             </section>
 
