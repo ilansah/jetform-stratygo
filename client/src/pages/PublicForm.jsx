@@ -224,7 +224,7 @@ const PublicForm = () => {
                                 <div className="absolute inset-0 bg-gradient-to-br from-red-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                 <div className="relative z-10 flex flex-col items-center">
                                     <div className="w-56 h-56 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                                        <img src={fibreIcon} alt="Fibre" className="w-full h-full object-contain" />
+                                        <img src={fibreIcon} alt="Fibre" className="w-full h-full object-contain p-4" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-gray-800 mb-2">Fibre</h2>
                                     <p className="text-gray-500">Accréditation pour les vendeurs Fibre Optique</p>
@@ -238,7 +238,7 @@ const PublicForm = () => {
                                 <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                 <div className="relative z-10 flex flex-col items-center">
                                     <div className="w-56 h-56 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                                        <img src={energieIcon} alt="Energie" className="w-full h-full object-contain" />
+                                        <img src={energieIcon} alt="Energie" className="w-full h-full object-contain p-4" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-gray-800 mb-2">Energie</h2>
                                     <p className="text-gray-500">Accréditation pour les vendeurs Energie</p>
