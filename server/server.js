@@ -170,11 +170,22 @@ app.post('/api/submissions', upload.fields([
             signed_charte_path
         ];
 
-        const [result] = await pool.execute(query, values);
+        try {
+            const [result] = await pool.query(query, values);
 
-        res.status(201).json({ message: 'Submission successful', id: result.insertId });
+            // Send Email Notifications
+            if (data.email) {
+                // Send confirmation email to applicant, simple version for now or use existing logic if any
+            }
 
+            res.status(201).json({ message: 'Submission successful', id: result.insertId });
+        } catch (err) {
+            console.error('❌ Database Insertion Error:', err);
+            console.error('Query Values:', values);
+            res.status(500).json({ error: 'Internal Server Error', details: err.message, sqlMessage: err.sqlMessage });
+        }
     } catch (error) {
+        // Upper level catch for file handling or other sync errors
         console.error('Error submitting form:', error);
         res.status(500).json({ error: 'Internal server error', details: error.message });
     }
@@ -228,7 +239,8 @@ app.put('/api/submissions/:id', async (req, res) => {
         res.json({ message: 'Updated successfully', data: rows[0] });
     } catch (error) {
         console.error('Error updating submission:', error);
-        res.status(500).json({ error: 'Internal server error', details: error.message });
+        console.error('Query Values:', values); // Helpful for debugging
+        res.status(500).json({ error: 'Internal server error', details: error.message, sqlMessage: error.sqlMessage });
     }
 });
 
