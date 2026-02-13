@@ -26,8 +26,16 @@ app.use(cors());
 app.use(express.json());
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Fix: If file not found in uploads, return 404 instead of falling through to React index.html
+app.use('/uploads', (req, res) => {
+    res.status(404).send('File not found');
+});
 // Serve client public files (for PDF and other static assets)
 app.use('/documents', express.static(path.join(__dirname, '../client/public/documents')));
+// Fix: If file not found in documents, return 404 instead of falling through to React index.html
+app.use('/documents', (req, res) => {
+    res.status(404).send('File not found');
+});
 
 // Serve React Frontend (Static Files)
 app.use(express.static(path.join(__dirname, '../client/dist')));
