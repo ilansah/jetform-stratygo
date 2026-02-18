@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Header from '../components/Header';
 import EditableCell from '../components/EditableCell';
-import { Eye, FileText, CheckCircle, Clock, Image as ImageIcon, Download, Search, FileSpreadsheet, XCircle, Trash2, Upload } from 'lucide-react';
+import { Eye, FileText, CheckCircle, Clock, Image as ImageIcon, Download, Search, FileSpreadsheet, XCircle, Trash2, Upload, ChevronLeft, ChevronRight } from 'lucide-react';
 import PdfPreview from '../components/PdfPreview';
 import fibreIcon from '../assets/telecoms.png';
 import energieIcon from '../assets/picto_energie.png';
@@ -14,6 +14,12 @@ const AdminDashboard = () => {
     const [previewFile, setPreviewFile] = useState(null);
     const [showPreview, setShowPreview] = useState(false);
     const [activeTab, setActiveTab] = useState('Fibre');
+
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+    const itemsPerPage = 50;
 
     // Auth state
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -34,15 +40,26 @@ const AdminDashboard = () => {
 
     useEffect(() => {
         if (isAuthenticated) {
-            fetchSubmissions();
+            fetchSubmissions(currentPage);
         }
-    }, [isAuthenticated]);
+    }, [isAuthenticated, currentPage]);
 
-    const fetchSubmissions = async () => {
+    const fetchSubmissions = async (page = 1) => {
+        setLoading(true);
         try {
-            const response = await fetch('/api/submissions');
-            const data = await response.json();
-            setSubmissions(data);
+            const response = await fetch(`/api/submissions?page=${page}&limit=${itemsPerPage}`);
+            const result = await response.json();
+
+            if (result.pagination) {
+                setSubmissions(result.data);
+                setTotalPages(result.pagination.totalPages);
+                setTotalItems(result.pagination.total);
+                setCurrentPage(result.pagination.page);
+            } else {
+                setSubmissions(result); // Fallback for old API behavior
+                setTotalPages(1);
+                setTotalItems(result.length);
+            }
         } catch (error) {
             console.error('Error fetching submissions:', error);
         } finally {
@@ -140,678 +157,734 @@ const AdminDashboard = () => {
             setLoading(false);
             event.target.value = ''; // Reset input
         }
-    };
+    } finally {
+        setLoading(false);
+        event.target.value = ''; // Reset input
+    }
+};
 
-    // Modal state for refusal
-    const [showRefusalModal, setShowRefusalModal] = useState(false);
-    const [selectedSubmissionId, setSelectedSubmissionId] = useState(null);
-    const [refusalReason, setRefusalReason] = useState('');
+const deleteSubmission = async (id) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette accréditation ?')) return;
 
-    const deleteSubmissionsByType = async (type) => {
-        const count = submissions.filter(sub => (sub.type || 'Fibre') === type).length;
-        if (count === 0) {
-            alert(`Aucune donnée ${type} à supprimer.`);
-            return;
-        }
+    const password = prompt("Mot de passe administrateur :");
+    if (password !== '03071982') {
+        alert('Mot de passe incorrect');
+        return;
+    }
 
-        if (!confirm(`ATTENTION : Vous êtes sur le point de supprimer TOUTES les ${count} demandes "${type}".\n\nCette action est IRRÉVERSIBLE et supprimera également tous les fichiers associés.\n\nVoulez-vous vraiment continuer ?`)) {
-            return;
-        }
-
-        if (!confirm(`Êtes-vous VRAIMENT sûr ?\n\nConfirmez la suppression IMMÉDIATE et DÉFINITIVE de ${count} dossiers ${type}.`)) {
-            return;
-        }
-
-        try {
-            const response = await fetch(`/api/submissions/type/${type}`, {
-                method: 'DELETE',
-            });
-
-            if (response.ok) {
-                setSubmissions(submissions.filter(sub => (sub.type || 'Fibre') !== type));
-                alert(`Toutes les données ${type} ont été supprimées.`);
-            } else {
-                alert('Erreur lors de la suppression');
-            }
-        } catch (error) {
-            console.error('Error deleting type:', error);
+    try {
+        const response = await fetch(`/api/submissions/${id}`, { method: 'DELETE' });
+        if (response.ok) {
+            setSubmissions(submissions.filter(sub => sub.id !== id));
+        } else {
             alert('Erreur lors de la suppression');
         }
-    };
+    } catch (error) {
+        console.error('Error deleting submission:', error);
+    }
+};
 
-    const handleStatusChange = (id, newStatus) => {
-        if (newStatus === 'Refusé') {
-            setSelectedSubmissionId(id);
-            setRefusalReason('');
-            setShowRefusalModal(true);
-        } else {
-            updateStatus(id, newStatus);
-        }
-    };
+// Modal state for refusal
+const [showRefusalModal, setShowRefusalModal] = useState(false);
+const [selectedSubmissionId, setSelectedSubmissionId] = useState(null);
+const [refusalReason, setRefusalReason] = useState('');
 
-    const confirmRefusal = () => {
-        if (selectedSubmissionId) {
-            updateStatus(selectedSubmissionId, 'Refusé', refusalReason);
-            setShowRefusalModal(false);
-            setSelectedSubmissionId(null);
-        }
-    };
+const deleteSubmissionsByType = async (type) => {
+    const count = submissions.filter(sub => (sub.type || 'Fibre') === type).length;
+    if (count === 0) {
+        alert(`Aucune donnée ${type} à supprimer.`);
+        return;
+    }
 
-    const updateStatus = async (id, newStatus, reason = null) => {
-        try {
-            const response = await fetch(`/api/submissions/${id}/status`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: newStatus, motif: reason }),
-            });
-            if (response.ok) {
-                setSubmissions(submissions.map(sub =>
-                    sub.id === id ? { ...sub, status: newStatus } : sub
-                ));
-            }
-        } catch (error) {
-            console.error('Error updating status:', error);
-        }
-    };
+    if (!confirm(`ATTENTION : Vous êtes sur le point de supprimer TOUTES les ${count} demandes "${type}".\n\nCette action est IRRÉVERSIBLE et supprimera également tous les fichiers associés.\n\nVoulez-vous vraiment continuer ?`)) {
+        return;
+    }
 
-    const getFileType = (filename) => {
-        if (!filename) return 'unknown';
-        const ext = filename.split('.').pop().toLowerCase();
-        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return 'image';
-        if (ext === 'pdf') return 'pdf';
-        return 'unknown';
-    };
+    if (!confirm(`Êtes-vous VRAIMENT sûr ?\n\nConfirmez la suppression IMMÉDIATE et DÉFINITIVE de ${count} dossiers ${type}.`)) {
+        return;
+    }
 
-    const openPreview = (filename) => {
-        const type = getFileType(filename);
-        setPreviewFile({ url: `/uploads/${filename}`, type, filename });
-        setShowPreview(true);
-    };
+    const password = prompt("Veuillez entrer le mot de passe administrateur pour confirmer la suppression (03071982) :");
+    if (!password) return;
 
-    const downloadFile = (filename) => {
-        const link = document.createElement('a');
-        link.href = `/uploads/${filename}`;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
-    const formatDate = (dateString) => {
-        if (!dateString) return '-';
-        return new Date(dateString).toLocaleDateString('fr-FR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
+    try {
+        const response = await fetch(`/api/submissions/type/${type}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password })
         });
-    };
 
-    const filteredSubmissions = submissions.filter(sub => {
-        const matchesType = (sub.type || 'Fibre') === activeTab;
-        const matchesSearch = !searchTerm ||
-            sub.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            sub.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            sub.phone?.includes(searchTerm);
+        if (response.ok) {
+            setSubmissions(submissions.filter(sub => (sub.type || 'Fibre') !== type));
+            alert(`Toutes les données ${type} ont été supprimées.`);
+        } else {
+            alert('Erreur lors de la suppression');
+        }
+    } catch (error) {
+        console.error('Error deleting type:', error);
+        alert('Erreur lors de la suppression');
+    }
+};
 
-        const matchesStatus = statusFilter === 'all' || sub.status === statusFilter;
+const handleStatusChange = (id, newStatus) => {
+    if (newStatus === 'Refusé') {
+        setSelectedSubmissionId(id);
+        setRefusalReason('');
+        setShowRefusalModal(true);
+    } else {
+        updateStatus(id, newStatus);
+    }
+};
 
-        return matchesType && matchesSearch && matchesStatus;
+const confirmRefusal = () => {
+    if (selectedSubmissionId) {
+        updateStatus(selectedSubmissionId, 'Refusé', refusalReason);
+        setShowRefusalModal(false);
+        setSelectedSubmissionId(null);
+    }
+};
+
+const updateStatus = async (id, newStatus, reason = null) => {
+    try {
+        const response = await fetch(`/api/submissions/${id}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus, motif: reason }),
+        });
+        if (response.ok) {
+            setSubmissions(submissions.map(sub =>
+                sub.id === id ? { ...sub, status: newStatus } : sub
+            ));
+        }
+    } catch (error) {
+        console.error('Error updating status:', error);
+    }
+};
+
+const getFileType = (filename) => {
+    if (!filename) return 'unknown';
+    const ext = filename.split('.').pop().toLowerCase();
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return 'image';
+    if (ext === 'pdf') return 'pdf';
+    return 'unknown';
+};
+
+const openPreview = (filename) => {
+    const type = getFileType(filename);
+    setPreviewFile({ url: `/uploads/${filename}`, type, filename });
+    setShowPreview(true);
+};
+
+const downloadFile = (filename) => {
+    const link = document.createElement('a');
+    link.href = `/uploads/${filename}`;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
     });
+};
 
-    if (!isAuthenticated) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-                <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-gray-100">
-                    <div className="text-center mb-8">
-                        <h1 className="text-2xl font-bold text-gray-900 mb-2">Administration</h1>
-                        <p className="text-gray-500">Veuillez vous identifier pour accéder au tableau de bord</p>
+const filteredSubmissions = submissions.filter(sub => {
+    const matchesType = (sub.type || 'Fibre') === activeTab;
+    const matchesSearch = !searchTerm ||
+        sub.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        sub.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        sub.phone?.includes(searchTerm);
+
+    const matchesStatus = statusFilter === 'all' || sub.status === statusFilter;
+
+    return matchesType && matchesSearch && matchesStatus;
+});
+
+if (!isAuthenticated) {
+    return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+            <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-gray-100">
+                <div className="text-center mb-8">
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Administration</h1>
+                    <p className="text-gray-500">Veuillez vous identifier pour accéder au tableau de bord</p>
+                </div>
+                <form onSubmit={handleLogin} className="space-y-6">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Mot de passe</label>
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                            placeholder="Entrez le mot de passe"
+                            autoFocus
+                        />
                     </div>
-                    <form onSubmit={handleLogin} className="space-y-6">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Mot de passe</label>
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                                placeholder="Entrez le mot de passe"
-                                autoFocus
-                            />
+                    {loginError && (
+                        <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center">
+                            <XCircle size={16} className="mr-2" />
+                            {loginError}
                         </div>
-                        {loginError && (
-                            <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center">
-                                <XCircle size={16} className="mr-2" />
-                                {loginError}
-                            </div>
-                        )}
-                        <button
-                            type="submit"
-                            className="w-full py-3 bg-[#2d2d2d] text-white rounded-xl hover:bg-black transition-colors font-medium"
-                        >
-                            Se connecter
-                        </button>
-                    </form>
-                </div>
+                    )}
+                    <button
+                        type="submit"
+                        className="w-full py-3 bg-[#2d2d2d] text-white rounded-xl hover:bg-black transition-colors font-medium"
+                    >
+                        Se connecter
+                    </button>
+                </form>
             </div>
-        );
-    }
+        </div>
+    );
+}
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gray-50">
-                <Header />
-                <div className="flex items-center justify-center h-96">
-                    <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: '#e63946' }}></div>
-                        <p style={{ color: '#4a4a4a' }}>Chargement...</p>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
+if (loading) {
     return (
         <div className="min-h-screen bg-gray-50">
             <Header />
-            <main className="max-w-[1800px] mx-auto px-6 py-8">
-                {/* Header Section */}
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold mb-2" style={{ color: '#2d2d2d' }}>
-                        Dashboard Administrateur
-                    </h1>
-                    <p className="text-lg" style={{ color: '#4a4a4a' }}>
-                        {filteredSubmissions.length} accréditation{filteredSubmissions.length > 1 ? 's' : ''}
-                    </p>
+            <div className="flex items-center justify-center h-96">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: '#e63946' }}></div>
+                    <p style={{ color: '#4a4a4a' }}>Chargement...</p>
                 </div>
-
-                {/* Tabs Section */}
-                <div className="flex space-x-4 mb-6">
-                    <button
-                        onClick={() => setActiveTab('Fibre')}
-                        className={`px-6 py-3 rounded-xl font-bold transition-all flex items-center space-x-2 ${activeTab === 'Fibre'
-                            ? 'bg-[#2d2d2d] text-white shadow-lg transform scale-105'
-                            : 'bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-900'
-                            }`}
-                    >
-                        <span><img src={fibreIcon} alt="Fibre" className="w-6 h-6 object-contain" /></span>
-                        <span>Fibre</span>
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('Energie')}
-                        className={`px-6 py-3 rounded-xl font-bold transition-all flex items-center space-x-2 ${activeTab === 'Energie'
-                            ? 'bg-green-600 text-white shadow-lg transform scale-105'
-                            : 'bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-900'
-                            }`}
-                    >
-                        <span><img src={energieIcon} alt="Energie" className="w-6 h-6 object-contain" /></span>
-                        <span>Energie</span>
-                    </button>
-                </div>
-
-                {/* Filters Section */}
-                <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-                    <div className="flex flex-wrap gap-4">
-                        {/* Search */}
-                        <div className="flex-1 min-w-[300px]">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                                <input
-                                    type="text"
-                                    placeholder="Rechercher par nom, email ou téléphone..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Status Filter */}
-                        <div className="min-w-[200px]">
-                            <select
-                                value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="all">Tous les statuts</option>
-                                <option value="En Cours">En Cours</option>
-                                <option value="Approuvé">Approuvé</option>
-                                <option value="Refusé">Refusé</option>
-                            </select>
-                        </div>
-
-                        {/* Import Button */}
-                        <div className="flex space-x-3">
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                className="hidden"
-                                accept=".csv, .xlsx, .xls"
-                                onChange={handleFileChange}
-                            />
-                            <button
-                                onClick={handleImportClick}
-                                className="px-6 py-3 bg-[#2d2d2d] text-white rounded-xl font-semibold hover:bg-black transition-all flex items-center space-x-2 shadow-sm hover:shadow-md"
-                            >
-                                <Upload size={20} />
-                                <span>Importer</span>
-                            </button>
-                        </div>
-
-                        {/* Export Buttons */}
-                        <div className="flex space-x-3">
-                            <button
-                                onClick={exportToCSV}
-                                className="px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-all flex items-center space-x-2 shadow-sm hover:shadow-md"
-                            >
-                                <FileSpreadsheet size={20} />
-                                <span>CSV</span>
-                            </button>
-                            <button
-                                onClick={exportToExcel}
-                                className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all flex items-center space-x-2 shadow-sm hover:shadow-md"
-                            >
-                                <FileSpreadsheet size={20} />
-                                <span>Excel</span>
-                            </button>
-                        </div>
-
-                        {/* Bulk Delete Button - Specific to Active Tab */}
-                        <div className="border-l border-gray-200 pl-4 ml-2">
-                            <button
-                                onClick={() => deleteSubmissionsByType(activeTab)}
-                                className="px-6 py-3 bg-red-50 text-red-600 border border-red-200 rounded-xl font-semibold hover:bg-red-600 hover:text-white transition-all flex items-center space-x-2 shadow-sm hover:shadow-md"
-                                title={`Supprimer TOTALE de tous les dossiers ${activeTab}`}
-                            >
-                                <Trash2 size={20} />
-                                <span>Vider {activeTab}</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Table Section */}
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-gray-200" style={{ background: 'linear-gradient(to bottom, #f9fafb, #ffffff)' }}>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>ID</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Statut</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Date</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Photo</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Nom Complet</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Téléphone</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Email</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Rôle</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Type Contrat</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Ville Agence</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Manager</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Directeur</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Animateur</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Date Début</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Code Équipe</th>
-                                    {activeTab === 'Fibre' && (
-                                        <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Test Fibre</th>
-                                    )}
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Documents</th>
-                                    <th className="px-4 py-4 text-center text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {filteredSubmissions.map((sub, index) => (
-                                    <tr
-                                        key={sub.id}
-                                        className="hover:bg-gray-50 transition-colors"
-                                        style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#fafafa' }}
-                                    >
-                                        {/* ID */}
-                                        <td className="px-4 py-3 whitespace-nowrap">
-                                            <span className="text-sm font-mono font-semibold" style={{ color: '#4a4a4a' }}>
-                                                #{String(sub.id).padStart(3, '0')}
-                                            </span>
-                                        </td>
-
-                                        {/* Status */}
-                                        <td className="px-4 py-3 whitespace-nowrap">
-                                            <select
-                                                value={sub.status}
-                                                onChange={(e) => handleStatusChange(sub.id, e.target.value)}
-                                                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border-2 ${sub.status === 'Approuvé'
-                                                    ? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200'
-                                                    : sub.status === 'Refusé'
-                                                        ? 'bg-red-100 text-red-800 border-red-300 hover:bg-red-200'
-                                                        : 'bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200'
-                                                    }`}
-                                            >
-                                                <option value="En Cours">⏱️ En Cours</option>
-                                                <option value="Approuvé">✅ Approuvé</option>
-                                                <option value="Refusé">❌ Refusé</option>
-                                            </select>
-                                        </td>
-
-                                        {/* Date */}
-                                        <td className="px-4 py-3 whitespace-nowrap text-sm" style={{ color: '#4a4a4a' }}>
-                                            {formatDate(sub.created_at)}
-                                        </td>
-
-                                        {/* Photo */}
-                                        <td className="px-4 py-3 whitespace-nowrap">
-                                            {sub.photo_path ? (
-                                                <button
-                                                    onClick={() => openPreview(sub.photo_path)}
-                                                    className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-200 hover:border-blue-500 transition-colors flex items-center justify-center bg-gray-50"
-                                                >
-                                                    {sub.photo_path.toLowerCase().endsWith('.pdf') ? (
-                                                        <FileText size={24} className="text-red-500" />
-                                                    ) : (
-                                                        <img
-                                                            src={`/uploads/${sub.photo_path}`}
-                                                            alt="Photo"
-                                                            className="w-full h-full object-cover"
-                                                        />
-                                                    )}
-                                                </button>
-                                            ) : (
-                                                <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
-                                                    <ImageIcon size={24} className="text-gray-400" />
-                                                </div>
-                                            )}
-                                        </td>
-
-                                        {/* Nom Complet */}
-                                        <td className="px-4 py-3 min-w-[200px]">
-                                            <EditableCell
-                                                value={sub.full_name}
-                                                onSave={(value) => updateField(sub.id, 'full_name', value)}
-                                                type="text"
-                                            />
-                                        </td>
-
-                                        {/* Téléphone */}
-                                        <td className="px-4 py-3 min-w-[150px]">
-                                            <EditableCell
-                                                value={sub.phone}
-                                                onSave={(value) => updateField(sub.id, 'phone', value)}
-                                                type="tel"
-                                            />
-                                        </td>
-
-                                        {/* Email */}
-                                        <td className="px-4 py-3 min-w-[200px]">
-                                            <EditableCell
-                                                value={sub.email}
-                                                onSave={(value) => updateField(sub.id, 'email', value)}
-                                                type="email"
-                                            />
-                                        </td>
-
-                                        {/* Rôle */}
-                                        <td className="px-4 py-3 min-w-[150px]">
-                                            <EditableCell
-                                                value={sub.role}
-                                                onSave={(value) => updateField(sub.id, 'role', value)}
-                                                type="select"
-                                                options={['Vendeur', 'Manager', 'Directeur', 'Animateur Réseau']}
-                                            />
-                                        </td>
-
-                                        {/* Type Contrat */}
-                                        <td className="px-4 py-3 min-w-[150px]">
-                                            <EditableCell
-                                                value={sub.contract_type || '-'}
-                                                onSave={(value) => updateField(sub.id, 'contract_type', value)}
-                                                type="select"
-                                                options={['VRP', 'VDI', 'CDI/CDD', 'Auto-entrepreneur']}
-                                            />
-                                        </td>
-
-                                        {/* Ville Agence */}
-                                        <td className="px-4 py-3 min-w-[150px]">
-                                            <EditableCell
-                                                value={sub.agency_city}
-                                                onSave={(value) => updateField(sub.id, 'agency_city', value)}
-                                                type="text"
-                                            />
-                                        </td>
-
-                                        {/* Manager Direct */}
-                                        <td className="px-4 py-3 min-w-[180px]">
-                                            <EditableCell
-                                                value={sub.direct_manager_name || '-'}
-                                                onSave={(value) => updateField(sub.id, 'direct_manager_name', value)}
-                                                type="text"
-                                            />
-                                        </td>
-
-                                        {/* Directeur */}
-                                        <td className="px-4 py-3 min-w-[180px]">
-                                            <EditableCell
-                                                value={sub.director_name || '-'}
-                                                onSave={(value) => updateField(sub.id, 'director_name', value)}
-                                                type="text"
-                                            />
-                                        </td>
-
-                                        {/* Animateur Réseau */}
-                                        <td className="px-4 py-3 min-w-[180px]">
-                                            <EditableCell
-                                                value={sub.network_animator_name || '-'}
-                                                onSave={(value) => updateField(sub.id, 'network_animator_name', value)}
-                                                type="text"
-                                            />
-                                        </td>
-
-                                        {/* Date Début */}
-                                        <td className="px-4 py-3 min-w-[150px]">
-                                            <EditableCell
-                                                value={sub.start_date ? sub.start_date.split('T')[0] : ''}
-                                                onSave={(value) => updateField(sub.id, 'start_date', value)}
-                                                type="date"
-                                            />
-                                        </td>
-
-                                        {/* Code Équipe */}
-                                        <td className="px-4 py-3 min-w-[120px]">
-                                            <EditableCell
-                                                value={sub.team_code}
-                                                onSave={(value) => updateField(sub.id, 'team_code', value)}
-                                                type="text"
-                                            />
-                                        </td>
-
-
-
-                                        {/* Test Fibre */}
-                                        {activeTab === 'Fibre' && (
-                                            <td className="px-4 py-3 whitespace-nowrap text-center">
-                                                <button
-                                                    onClick={() => updateField(sub.id, 'fiber_test_done', !sub.fiber_test_done)}
-                                                    className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${sub.fiber_test_done
-                                                        ? 'bg-green-500 border-green-500'
-                                                        : 'bg-white border-gray-300 hover:border-gray-400'
-                                                        }`}
-                                                >
-                                                    {sub.fiber_test_done && <CheckCircle size={14} className="text-white" />}
-                                                </button>
-                                            </td>
-                                        )}
-
-                                        {/* Documents */}
-                                        <td className="px-4 py-3 whitespace-nowrap">
-                                            <div className="flex items-center space-x-2">
-                                                {sub.id_card_front_path && (
-                                                    <button
-                                                        onClick={() => openPreview(sub.id_card_front_path, 'pdf')}
-                                                        className="p-2 hover:bg-blue-50 rounded transition-colors"
-                                                        title="Carte d'identité recto"
-                                                    >
-                                                        <FileText size={16} style={{ color: '#3b82f6' }} />
-                                                    </button>
-                                                )}
-                                                {sub.id_card_back_path && (
-                                                    <button
-                                                        onClick={() => openPreview(sub.id_card_back_path, 'pdf')}
-                                                        className="p-2 hover:bg-blue-50 rounded transition-colors"
-                                                        title="Carte d'identité verso"
-                                                    >
-                                                        <FileText size={16} style={{ color: '#3b82f6' }} />
-                                                    </button>
-                                                )}
-                                                {sub.signature_path && (
-                                                    <button
-                                                        onClick={() => openPreview(sub.signature_path, 'image')}
-                                                        className="p-2 hover:bg-purple-50 rounded transition-colors"
-                                                        title="Signature"
-                                                    >
-                                                        <Eye size={16} style={{ color: '#9333ea' }} />
-                                                    </button>
-                                                )}
-                                                {sub.signed_pdf_path && (
-                                                    <button
-                                                        onClick={() => openPreview(sub.signed_pdf_path, 'pdf')}
-                                                        className="p-2 hover:bg-red-50 rounded transition-colors"
-                                                        title="PDF signé"
-                                                    >
-                                                        <Download size={16} style={{ color: '#e63946' }} />
-                                                    </button>
-                                                )}
-                                                {sub.signed_charte_path && (
-                                                    <button
-                                                        onClick={() => openPreview(sub.signed_charte_path, 'pdf')}
-                                                        className="p-2 hover:bg-amber-50 rounded transition-colors"
-                                                        title="Charte signée"
-                                                    >
-                                                        <FileText size={16} style={{ color: '#d97706' }} />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </td>
-
-                                        {/* Actions */}
-                                        <td className="px-4 py-3 whitespace-nowrap text-center">
-                                            <button
-                                                onClick={() => deleteSubmission(sub.id)}
-                                                className="p-2 hover:bg-red-50 rounded-lg transition-colors group"
-                                                title="Supprimer"
-                                            >
-                                                <Trash2 size={18} className="text-gray-400 group-hover:text-red-600 transition-colors" />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {filteredSubmissions.length === 0 && (
-                        <div className="text-center py-12">
-                            <p className="text-lg" style={{ color: '#4a4a4a' }}>
-                                Aucune accréditation trouvée
-                            </p>
-                        </div>
-                    )}
-                </div>
-
-                {/* Preview Modal */}
-                {showPreview && previewFile && (
-                    previewFile.type === 'pdf' ? (
-                        <PdfPreview
-                            url={previewFile.url}
-                            filename={previewFile.filename}
-                            onClose={() => setShowPreview(false)}
-                        />
-                    ) : (
-                        <div
-                            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
-                            onClick={() => setShowPreview(false)}
-                        >
-                            <div
-                                className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                {/* Modal Header */}
-                                <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50">
-                                    <h3 className="text-lg font-semibold" style={{ color: '#2d2d2d' }}>
-                                        Prévisualisation
-                                    </h3>
-                                    <div className="flex space-x-2">
-                                        <button
-                                            onClick={() => downloadFile(previewFile.filename)}
-                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-                                        >
-                                            <Download size={16} />
-                                            <span>Télécharger</span>
-                                        </button>
-                                        <button
-                                            onClick={() => setShowPreview(false)}
-                                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                                        >
-                                            Fermer
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Modal Content - Images only (PDFs handled by PdfPreview component) */}
-                                <div className="p-6 overflow-auto max-h-[calc(90vh-80px)] flex justify-center items-center bg-gray-100">
-                                    {previewFile.type === 'image' ? (
-                                        <img
-                                            src={previewFile.url}
-                                            alt="Preview"
-                                            className="max-w-full max-h-[70vh] rounded-lg shadow-lg object-contain"
-                                        />
-                                    ) : (
-                                        <div className="text-center p-8">
-                                            <p className="text-gray-500 mb-4">Format non supporté pour la prévisualisation direct.</p>
-                                            <button
-                                                onClick={() => downloadFile(previewFile.filename)}
-                                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                            >
-                                                Télécharger le fichier
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    )
-                )}
-
-                {/* Refusal Reason Modal */}
-                {showRefusalModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                        <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
-                            <h3 className="text-xl font-bold mb-4" style={{ color: '#2d2d2d' }}>Motif du refus</h3>
-                            <p className="text-sm text-gray-500 mb-4">
-                                Veuillez indiquer la raison du refus pour notifier le collaborateur.
-                            </p>
-                            <textarea
-                                value={refusalReason}
-                                onChange={(e) => setRefusalReason(e.target.value)}
-                                placeholder="Ex: Document d'identité illisible, photo non conforme..."
-                                className="w-full h-32 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all resize-none mb-6"
-                                autoFocus
-                            />
-                            <div className="flex justify-end space-x-3">
-                                <button
-                                    onClick={() => setShowRefusalModal(false)}
-                                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
-                                >
-                                    Annuler
-                                </button>
-                                <button
-                                    onClick={confirmRefusal}
-                                    disabled={!refusalReason.trim()}
-                                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-red-200"
-                                >
-                                    Confirmer le refus
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </main>
+            </div>
         </div>
     );
+}
+
+return (
+    <div className="min-h-screen bg-gray-50">
+        <Header />
+        <main className="max-w-[1800px] mx-auto px-6 py-8">
+            {/* Header Section */}
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold mb-2" style={{ color: '#2d2d2d' }}>
+                    Dashboard Administrateur
+                </h1>
+                <p className="text-lg" style={{ color: '#4a4a4a' }}>
+                    {filteredSubmissions.length} accréditation{filteredSubmissions.length > 1 ? 's' : ''}
+                </p>
+            </div>
+
+            {/* Tabs Section */}
+            <div className="flex space-x-4 mb-6">
+                <button
+                    onClick={() => setActiveTab('Fibre')}
+                    className={`px-6 py-3 rounded-xl font-bold transition-all flex items-center space-x-2 ${activeTab === 'Fibre'
+                        ? 'bg-[#2d2d2d] text-white shadow-lg transform scale-105'
+                        : 'bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                        }`}
+                >
+                    <span><img src={fibreIcon} alt="Fibre" className="w-6 h-6 object-contain" /></span>
+                    <span>Fibre</span>
+                </button>
+                <button
+                    onClick={() => setActiveTab('Energie')}
+                    className={`px-6 py-3 rounded-xl font-bold transition-all flex items-center space-x-2 ${activeTab === 'Energie'
+                        ? 'bg-green-600 text-white shadow-lg transform scale-105'
+                        : 'bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                        }`}
+                >
+                    <span><img src={energieIcon} alt="Energie" className="w-6 h-6 object-contain" /></span>
+                    <span>Energie</span>
+                </button>
+            </div>
+
+            {/* Filters Section */}
+            <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+                <div className="flex flex-wrap gap-4">
+                    {/* Search */}
+                    <div className="flex-1 min-w-[300px]">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                            <input
+                                type="text"
+                                placeholder="Rechercher par nom, email ou téléphone..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Status Filter */}
+                    <div className="min-w-[200px]">
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="all">Tous les statuts</option>
+                            <option value="En Cours">En Cours</option>
+                            <option value="Approuvé">Approuvé</option>
+                            <option value="Refusé">Refusé</option>
+                        </select>
+                    </div>
+
+                    {/* Import Button */}
+                    <div className="flex space-x-3">
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            className="hidden"
+                            accept=".csv, .xlsx, .xls"
+                            onChange={handleFileChange}
+                        />
+                        <button
+                            onClick={handleImportClick}
+                            className="px-6 py-3 bg-[#2d2d2d] text-white rounded-xl font-semibold hover:bg-black transition-all flex items-center space-x-2 shadow-sm hover:shadow-md"
+                        >
+                            <Upload size={20} />
+                            <span>Importer</span>
+                        </button>
+                    </div>
+
+                    {/* Export Buttons */}
+                    <div className="flex space-x-3">
+                        <button
+                            onClick={exportToCSV}
+                            className="px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-all flex items-center space-x-2 shadow-sm hover:shadow-md"
+                        >
+                            <FileSpreadsheet size={20} />
+                            <span>CSV</span>
+                        </button>
+                        <button
+                            onClick={exportToExcel}
+                            className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all flex items-center space-x-2 shadow-sm hover:shadow-md"
+                        >
+                            <FileSpreadsheet size={20} />
+                            <span>Excel</span>
+                        </button>
+                    </div>
+
+                    {/* Bulk Delete Button - Specific to Active Tab */}
+                    <div className="border-l border-gray-200 pl-4 ml-2">
+                        <button
+                            onClick={() => deleteSubmissionsByType(activeTab)}
+                            className="px-6 py-3 bg-red-50 text-red-600 border border-red-200 rounded-xl font-semibold hover:bg-red-600 hover:text-white transition-all flex items-center space-x-2 shadow-sm hover:shadow-md"
+                            title={`Supprimer TOTALE de tous les dossiers ${activeTab}`}
+                        >
+                            <Trash2 size={20} />
+                            <span>Vider {activeTab}</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Table Section */}
+            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead>
+                            <tr className="border-b border-gray-200" style={{ background: 'linear-gradient(to bottom, #f9fafb, #ffffff)' }}>
+                                <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>ID</th>
+                                <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Statut</th>
+                                <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Date</th>
+                                <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Photo</th>
+                                <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Nom Complet</th>
+                                <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Téléphone</th>
+                                <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Email</th>
+                                <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Rôle</th>
+                                <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Type Contrat</th>
+                                <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Ville Agence</th>
+                                <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Manager</th>
+                                <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Directeur</th>
+                                <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Animateur</th>
+                                <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Date Début</th>
+                                <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Code Équipe</th>
+                                {activeTab === 'Fibre' && (
+                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Test Fibre</th>
+                                )}
+                                <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Documents</th>
+                                <th className="px-4 py-4 text-center text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {filteredSubmissions.map((sub, index) => (
+                                <tr
+                                    key={sub.id}
+                                    className="hover:bg-gray-50 transition-colors"
+                                    style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#fafafa' }}
+                                >
+                                    {/* ID */}
+                                    <td className="px-4 py-3 whitespace-nowrap">
+                                        <span className="text-sm font-mono font-semibold" style={{ color: '#4a4a4a' }}>
+                                            #{String(sub.id).padStart(3, '0')}
+                                        </span>
+                                    </td>
+
+                                    {/* Status */}
+                                    <td className="px-4 py-3 whitespace-nowrap">
+                                        <select
+                                            value={sub.status}
+                                            onChange={(e) => handleStatusChange(sub.id, e.target.value)}
+                                            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border-2 ${sub.status === 'Approuvé'
+                                                ? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200'
+                                                : sub.status === 'Refusé'
+                                                    ? 'bg-red-100 text-red-800 border-red-300 hover:bg-red-200'
+                                                    : 'bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200'
+                                                }`}
+                                        >
+                                            <option value="En Cours">⏱️ En Cours</option>
+                                            <option value="Approuvé">✅ Approuvé</option>
+                                            <option value="Refusé">❌ Refusé</option>
+                                        </select>
+                                    </td>
+
+                                    {/* Date */}
+                                    <td className="px-4 py-3 whitespace-nowrap text-sm" style={{ color: '#4a4a4a' }}>
+                                        {formatDate(sub.created_at)}
+                                    </td>
+
+                                    {/* Photo */}
+                                    <td className="px-4 py-3 whitespace-nowrap">
+                                        {sub.photo_path ? (
+                                            <button
+                                                onClick={() => openPreview(sub.photo_path)}
+                                                className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-200 hover:border-blue-500 transition-colors flex items-center justify-center bg-gray-50"
+                                            >
+                                                {sub.photo_path.toLowerCase().endsWith('.pdf') ? (
+                                                    <FileText size={24} className="text-red-500" />
+                                                ) : (
+                                                    <img
+                                                        src={`/uploads/${sub.photo_path}`}
+                                                        alt="Photo"
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                )}
+                                            </button>
+                                        ) : (
+                                            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+                                                <ImageIcon size={24} className="text-gray-400" />
+                                            </div>
+                                        )}
+                                    </td>
+
+                                    {/* Nom Complet */}
+                                    <td className="px-4 py-3 min-w-[200px]">
+                                        <EditableCell
+                                            value={sub.full_name}
+                                            onSave={(value) => updateField(sub.id, 'full_name', value)}
+                                            type="text"
+                                        />
+                                    </td>
+
+                                    {/* Téléphone */}
+                                    <td className="px-4 py-3 min-w-[150px]">
+                                        <EditableCell
+                                            value={sub.phone}
+                                            onSave={(value) => updateField(sub.id, 'phone', value)}
+                                            type="tel"
+                                        />
+                                    </td>
+
+                                    {/* Email */}
+                                    <td className="px-4 py-3 min-w-[200px]">
+                                        <EditableCell
+                                            value={sub.email}
+                                            onSave={(value) => updateField(sub.id, 'email', value)}
+                                            type="email"
+                                        />
+                                    </td>
+
+                                    {/* Rôle */}
+                                    <td className="px-4 py-3 min-w-[150px]">
+                                        <EditableCell
+                                            value={sub.role}
+                                            onSave={(value) => updateField(sub.id, 'role', value)}
+                                            type="select"
+                                            options={['Vendeur', 'Manager', 'Directeur', 'Animateur Réseau']}
+                                        />
+                                    </td>
+
+                                    {/* Type Contrat */}
+                                    <td className="px-4 py-3 min-w-[150px]">
+                                        <EditableCell
+                                            value={sub.contract_type || '-'}
+                                            onSave={(value) => updateField(sub.id, 'contract_type', value)}
+                                            type="select"
+                                            options={['VRP', 'VDI', 'CDI/CDD', 'Auto-entrepreneur']}
+                                        />
+                                    </td>
+
+                                    {/* Ville Agence */}
+                                    <td className="px-4 py-3 min-w-[150px]">
+                                        <EditableCell
+                                            value={sub.agency_city}
+                                            onSave={(value) => updateField(sub.id, 'agency_city', value)}
+                                            type="text"
+                                        />
+                                    </td>
+
+                                    {/* Manager Direct */}
+                                    <td className="px-4 py-3 min-w-[180px]">
+                                        <EditableCell
+                                            value={sub.direct_manager_name || '-'}
+                                            onSave={(value) => updateField(sub.id, 'direct_manager_name', value)}
+                                            type="text"
+                                        />
+                                    </td>
+
+                                    {/* Directeur */}
+                                    <td className="px-4 py-3 min-w-[180px]">
+                                        <EditableCell
+                                            value={sub.director_name || '-'}
+                                            onSave={(value) => updateField(sub.id, 'director_name', value)}
+                                            type="text"
+                                        />
+                                    </td>
+
+                                    {/* Animateur Réseau */}
+                                    <td className="px-4 py-3 min-w-[180px]">
+                                        <EditableCell
+                                            value={sub.network_animator_name || '-'}
+                                            onSave={(value) => updateField(sub.id, 'network_animator_name', value)}
+                                            type="text"
+                                        />
+                                    </td>
+
+                                    {/* Date Début */}
+                                    <td className="px-4 py-3 min-w-[150px]">
+                                        <EditableCell
+                                            value={sub.start_date ? sub.start_date.split('T')[0] : ''}
+                                            onSave={(value) => updateField(sub.id, 'start_date', value)}
+                                            type="date"
+                                        />
+                                    </td>
+
+                                    {/* Code Équipe */}
+                                    <td className="px-4 py-3 min-w-[120px]">
+                                        <EditableCell
+                                            value={sub.team_code}
+                                            onSave={(value) => updateField(sub.id, 'team_code', value)}
+                                            type="text"
+                                        />
+                                    </td>
+
+
+
+                                    {/* Test Fibre */}
+                                    {activeTab === 'Fibre' && (
+                                        <td className="px-4 py-3 whitespace-nowrap text-center">
+                                            <button
+                                                onClick={() => updateField(sub.id, 'fiber_test_done', !sub.fiber_test_done)}
+                                                className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${sub.fiber_test_done
+                                                    ? 'bg-green-500 border-green-500'
+                                                    : 'bg-white border-gray-300 hover:border-gray-400'
+                                                    }`}
+                                            >
+                                                {sub.fiber_test_done && <CheckCircle size={14} className="text-white" />}
+                                            </button>
+                                        </td>
+                                    )}
+
+                                    {/* Documents */}
+                                    <td className="px-4 py-3 whitespace-nowrap">
+                                        <div className="flex items-center space-x-2">
+                                            {sub.id_card_front_path && (
+                                                <button
+                                                    onClick={() => openPreview(sub.id_card_front_path, 'pdf')}
+                                                    className="p-2 hover:bg-blue-50 rounded transition-colors"
+                                                    title="Carte d'identité recto"
+                                                >
+                                                    <FileText size={16} style={{ color: '#3b82f6' }} />
+                                                </button>
+                                            )}
+                                            {sub.id_card_back_path && (
+                                                <button
+                                                    onClick={() => openPreview(sub.id_card_back_path, 'pdf')}
+                                                    className="p-2 hover:bg-blue-50 rounded transition-colors"
+                                                    title="Carte d'identité verso"
+                                                >
+                                                    <FileText size={16} style={{ color: '#3b82f6' }} />
+                                                </button>
+                                            )}
+                                            {sub.signature_path && (
+                                                <button
+                                                    onClick={() => openPreview(sub.signature_path, 'image')}
+                                                    className="p-2 hover:bg-purple-50 rounded transition-colors"
+                                                    title="Signature"
+                                                >
+                                                    <Eye size={16} style={{ color: '#9333ea' }} />
+                                                </button>
+                                            )}
+                                            {sub.signed_pdf_path && (
+                                                <button
+                                                    onClick={() => openPreview(sub.signed_pdf_path, 'pdf')}
+                                                    className="p-2 hover:bg-red-50 rounded transition-colors"
+                                                    title="PDF signé"
+                                                >
+                                                    <Download size={16} style={{ color: '#e63946' }} />
+                                                </button>
+                                            )}
+                                            {sub.signed_charte_path && (
+                                                <button
+                                                    onClick={() => openPreview(sub.signed_charte_path, 'pdf')}
+                                                    className="p-2 hover:bg-amber-50 rounded transition-colors"
+                                                    title="Charte signée"
+                                                >
+                                                    <FileText size={16} style={{ color: '#d97706' }} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </td>
+
+                                    {/* Actions */}
+                                    <td className="px-4 py-3 whitespace-nowrap text-center">
+                                        <button
+                                            onClick={() => deleteSubmission(sub.id)}
+                                            className="p-2 hover:bg-red-50 rounded-lg transition-colors group"
+                                            title="Supprimer"
+                                        >
+                                            <Trash2 size={18} className="text-gray-400 group-hover:text-red-600 transition-colors" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                {filteredSubmissions.length === 0 && (
+                    <div className="text-center py-12">
+                        <p className="text-lg" style={{ color: '#4a4a4a' }}>
+                            Aucune accréditation trouvée
+                        </p>
+                    </div>
+                )}
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-between mt-6 bg-white p-4 rounded-xl shadow-sm">
+                <div className="text-sm text-gray-500">
+                    Affichage de {submissions.length} sur {totalItems} résultats
+                </div>
+                <div className="flex items-center space-x-2">
+                    <button
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                        <ChevronLeft size={20} />
+                    </button>
+                    <span className="px-4 py-2 text-sm font-medium bg-gray-50 rounded-lg">
+                        Page {currentPage} sur {totalPages}
+                    </span>
+                    <button
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                        <ChevronRight size={20} />
+                    </button>
+                </div>
+            </div>
+
+            {/* Preview Modal */}
+            {showPreview && previewFile && (
+                previewFile.type === 'pdf' ? (
+                    <PdfPreview
+                        url={previewFile.url}
+                        filename={previewFile.filename}
+                        onClose={() => setShowPreview(false)}
+                    />
+                ) : (
+                    <div
+                        className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+                        onClick={() => setShowPreview(false)}
+                    >
+                        <div
+                            className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Modal Header */}
+                            <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50">
+                                <h3 className="text-lg font-semibold" style={{ color: '#2d2d2d' }}>
+                                    Prévisualisation
+                                </h3>
+                                <div className="flex space-x-2">
+                                    <button
+                                        onClick={() => downloadFile(previewFile.filename)}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                                    >
+                                        <Download size={16} />
+                                        <span>Télécharger</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setShowPreview(false)}
+                                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                                    >
+                                        Fermer
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Modal Content - Images only (PDFs handled by PdfPreview component) */}
+                            <div className="p-6 overflow-auto max-h-[calc(90vh-80px)] flex justify-center items-center bg-gray-100">
+                                {previewFile.type === 'image' ? (
+                                    <img
+                                        src={previewFile.url}
+                                        alt="Preview"
+                                        className="max-w-full max-h-[70vh] rounded-lg shadow-lg object-contain"
+                                    />
+                                ) : (
+                                    <div className="text-center p-8">
+                                        <p className="text-gray-500 mb-4">Format non supporté pour la prévisualisation direct.</p>
+                                        <button
+                                            onClick={() => downloadFile(previewFile.filename)}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                        >
+                                            Télécharger le fichier
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )
+            )}
+
+            {/* Refusal Reason Modal */}
+            {showRefusalModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
+                        <h3 className="text-xl font-bold mb-4" style={{ color: '#2d2d2d' }}>Motif du refus</h3>
+                        <p className="text-sm text-gray-500 mb-4">
+                            Veuillez indiquer la raison du refus pour notifier le collaborateur.
+                        </p>
+                        <textarea
+                            value={refusalReason}
+                            onChange={(e) => setRefusalReason(e.target.value)}
+                            placeholder="Ex: Document d'identité illisible, photo non conforme..."
+                            className="w-full h-32 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all resize-none mb-6"
+                            autoFocus
+                        />
+                        <div className="flex justify-end space-x-3">
+                            <button
+                                onClick={() => setShowRefusalModal(false)}
+                                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                onClick={confirmRefusal}
+                                disabled={!refusalReason.trim()}
+                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-red-200"
+                            >
+                                Confirmer le refus
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </main>
+    </div>
+);
 };
 
 export default AdminDashboard;

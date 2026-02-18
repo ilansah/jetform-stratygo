@@ -252,11 +252,29 @@ app.put('/api/submissions/:id', async (req, res) => {
     }
 });
 
-// 3. Get All Accreditations (Admin)
+// 3. Get All Accreditations (Admin) - Paginated
 app.get('/api/submissions', async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT * FROM accreditations ORDER BY created_at DESC');
-        res.json(rows);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 50;
+        const offset = (page - 1) * limit;
+
+        // Get total count
+        const [countResult] = await pool.query('SELECT COUNT(*) as total FROM accreditations');
+        const total = countResult[0].total;
+
+        // Get paginated data
+        const [rows] = await pool.query('SELECT * FROM accreditations ORDER BY created_at DESC LIMIT ? OFFSET ?', [limit, offset]);
+
+        res.json({
+            data: rows,
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            }
+        });
     } catch (error) {
         console.error('Error fetching submissions:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -354,6 +372,12 @@ app.delete('/api/submissions/:id', async (req, res) => {
 app.delete('/api/submissions/type/:type', async (req, res) => {
     try {
         const { type } = req.params;
+        const { password } = req.body;
+
+        // Security Check
+        if (password !== '03071982') {
+            return res.status(403).json({ error: 'Mot de passe incorrect' });
+        }
 
         // Validation
         if (!['Fibre', 'Energie'].includes(type)) {
@@ -416,7 +440,8 @@ app.get('/api/submissions/export/csv', async (req, res) => {
             'ID', 'Date de création', 'Statut', 'Nom complet', 'Téléphone', 'Email',
             'Rôle', 'Ville Agence', 'Manager Direct', 'Directeur', 'Animateur Réseau',
             'Date de début', 'Code équipe', 'Email gestionnaire', 'Email RH',
-            'Test fibre effectué', 'Nom du mandataire', 'Conditions acceptées'
+            'Test fibre effectué', 'Nom du mandataire', 'Conditions acceptées',
+            'id_card_front_path', 'id_card_back_path', 'photo_path', 'signature_path', 'signed_pdf_path', 'signed_charte_path'
         ];
 
         // Convert rows to CSV format
@@ -441,7 +466,13 @@ app.get('/api/submissions/export/csv', async (req, res) => {
                 row.hr_email,
                 row.fiber_test_done ? 'Oui' : 'Non',
                 `"${row.proxy_name || ''}"`,
-                row.terms_accepted ? 'Oui' : 'Non'
+                row.terms_accepted ? 'Oui' : 'Non',
+                row.id_card_front_path || '',
+                row.id_card_back_path || '',
+                row.photo_path || '',
+                row.signature_path || '',
+                row.signed_pdf_path || '',
+                row.signed_charte_path || ''
             ];
             csvRows.push(values.join(','));
         });
@@ -487,7 +518,13 @@ app.get('/api/submissions/export/excel', async (req, res) => {
             'Email RH': row.hr_email,
             'Test fibre effectué': row.fiber_test_done ? 'Oui' : 'Non',
             'Nom du mandataire': row.proxy_name || '',
-            'Conditions acceptées': row.terms_accepted ? 'Oui' : 'Non'
+            'Conditions acceptées': row.terms_accepted ? 'Oui' : 'Non',
+            'id_card_front_path': row.id_card_front_path || '',
+            'id_card_back_path': row.id_card_back_path || '',
+            'photo_path': row.photo_path || '',
+            'signature_path': row.signature_path || '',
+            'signed_pdf_path': row.signed_pdf_path || '',
+            'signed_charte_path': row.signed_charte_path || ''
         }));
 
         // Create workbook and worksheet
@@ -617,14 +654,22 @@ app.post('/api/submissions/import', importUpload.single('file'), async (req, res
                     hr_email = 'accredgovad@ikmail.com';
                 }
 
+                const id_card_front_path = getValue(row, 'id_card_front_path');
+                const id_card_back_path = getValue(row, 'id_card_back_path');
+                const photo_path = getValue(row, 'photo_path');
+                const signature_path = getValue(row, 'signature_path');
+                const signed_pdf_path = getValue(row, 'signed_pdf_path');
+                const signed_charte_path = getValue(row, 'signed_charte_path');
+
                 // Insert into Query
                 const query = `
                     INSERT INTO accreditations 
                     (full_name, phone, email, address, role, agency_city, 
                     direct_manager_name, director_name, network_animator_name, 
                     start_date, team_code, manager_email, hr_email, 
-                    fiber_test_done, terms_accepted, type, status)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    fiber_test_done, terms_accepted, type, status,
+                    id_card_front_path, id_card_back_path, photo_path, signature_path, signed_pdf_path, signed_charte_path)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `;
 
                 const values = [
@@ -644,7 +689,13 @@ app.post('/api/submissions/import', importUpload.single('file'), async (req, res
                     0, // fiber_test_done
                     1, // terms_accepted (Assume yes for import?) - keeping it safe or 0
                     ['Fibre', 'Energie'].includes(type) ? type : 'Fibre',
-                    'En Cours'
+                    'En Cours',
+                    id_card_front_path,
+                    id_card_back_path,
+                    photo_path,
+                    signature_path,
+                    signed_pdf_path,
+                    signed_charte_path
                 ];
 
                 // Adjust terms_accepted based on data
