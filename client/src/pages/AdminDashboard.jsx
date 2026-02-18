@@ -1,10 +1,35 @@
 import React, { useEffect, useState } from 'react';
 import Header from '../components/Header';
 import EditableCell from '../components/EditableCell';
-import { Eye, FileText, CheckCircle, Clock, Image as ImageIcon, Download, Search, FileSpreadsheet, XCircle, Trash2, Upload, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Eye, FileText, CheckCircle, Clock, Image as ImageIcon, Download, Search, FileSpreadsheet, XCircle, Trash2, Upload, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import PdfPreview from '../components/PdfPreview';
 import fibreIcon from '../assets/telecoms.png';
 import energieIcon from '../assets/picto_energie.png';
+
+// Helper for pagination range
+const getPaginationRange = (totalPage, page, limit = 5, siblings = 1) => {
+    let totalPageNoInArray = 7 + siblings;
+    if (totalPageNoInArray >= totalPage) {
+        return Array.from({ length: totalPage }, (_, i) => i + 1);
+    }
+    let leftSiblingsIndex = Math.max(page - siblings, 1);
+    let rightSiblingsIndex = Math.min(page + siblings, totalPage);
+    let showLeftDots = leftSiblingsIndex > 2;
+    let showRightDots = rightSiblingsIndex < totalPage - 2;
+
+    if (!showLeftDots && showRightDots) {
+        let leftItemCount = 3 + 2 * siblings;
+        let leftRange = Array.from({ length: leftItemCount }, (_, i) => i + 1);
+        return [...leftRange, " ...", totalPage];
+    } else if (showLeftDots && !showRightDots) {
+        let rightItemCount = 3 + 2 * siblings;
+        let rightRange = Array.from({ length: rightItemCount }, (_, i) => totalPage - rightItemCount + i + 1);
+        return [1, "... ", ...rightRange];
+    } else {
+        let middleRange = Array.from({ length: rightSiblingsIndex - leftSiblingsIndex + 1 }, (_, i) => leftSiblingsIndex + i);
+        return [1, "... ", ...middleRange, " ...", totalPage];
+    }
+};
 
 const AdminDashboard = () => {
     const [submissions, setSubmissions] = useState([]);
@@ -504,29 +529,29 @@ const AdminDashboard = () => {
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-gray-200" style={{ background: 'linear-gradient(to bottom, #f9fafb, #ffffff)' }}>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>ID</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Statut</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Date</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Photo</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Nom Complet</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Téléphone</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Email</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Rôle</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Type Contrat</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Ville Agence</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Manager</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Directeur</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Animateur</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Date Début</th>
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Code Équipe</th>
+                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider w-10">ID</th>
+                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider w-24">Statut</th>
+                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider w-20">Date</th>
+                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider w-16">Photo</th>
+                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider max-w-[120px]">Nom</th>
+                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider max-w-[100px]">Tél</th>
+                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider max-w-[120px]">Email</th>
+                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider max-w-[80px]">Rôle</th>
+                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider max-w-[80px]">Contrat</th>
+                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider max-w-[80px]">Ville</th>
+                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider max-w-[80px]">Manager</th>
+                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider max-w-[80px]">Directeur</th>
+                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider max-w-[80px]">Anim.</th>
+                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider w-20">Début</th>
+                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider w-16">Eq.</th>
                                     {activeTab === 'Fibre' && (
-                                        <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Test Fibre</th>
+                                        <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider w-16">Test</th>
                                     )}
-                                    <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Documents</th>
-                                    <th className="px-4 py-4 text-center text-xs font-bold uppercase tracking-wider" style={{ color: '#2d2d2d' }}>Actions</th>
+                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider w-24">Docs</th>
+                                    <th className="px-2 py-2 text-center text-[10px] font-bold uppercase tracking-wider w-16">Act.</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100">
+                            <tbody className="divide-y divide-gray-100 text-xs">
                                 {filteredSubmissions.map((sub, index) => (
                                     <tr
                                         key={sub.id}
@@ -534,44 +559,44 @@ const AdminDashboard = () => {
                                         style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#fafafa' }}
                                     >
                                         {/* ID */}
-                                        <td className="px-4 py-3 whitespace-nowrap">
-                                            <span className="text-sm font-mono font-semibold" style={{ color: '#4a4a4a' }}>
-                                                #{String(sub.id).padStart(3, '0')}
+                                        <td className="px-2 py-1 whitespace-nowrap">
+                                            <span className="font-mono font-semibold text-gray-600">
+                                                #{sub.id}
                                             </span>
                                         </td>
 
                                         {/* Status */}
-                                        <td className="px-4 py-3 whitespace-nowrap">
+                                        <td className="px-2 py-1 whitespace-nowrap">
                                             <select
                                                 value={sub.status}
                                                 onChange={(e) => handleStatusChange(sub.id, e.target.value)}
-                                                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border-2 ${sub.status === 'Approuvé'
-                                                    ? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200'
+                                                className={`px-2 py-0.5 rounded text-[10px] font-bold border ${sub.status === 'Approuvé'
+                                                    ? 'bg-green-50 text-green-700 border-green-200'
                                                     : sub.status === 'Refusé'
-                                                        ? 'bg-red-100 text-red-800 border-red-300 hover:bg-red-200'
-                                                        : 'bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200'
+                                                        ? 'bg-red-50 text-red-700 border-red-200'
+                                                        : 'bg-yellow-50 text-yellow-700 border-yellow-200'
                                                     }`}
                                             >
-                                                <option value="En Cours">⏱️ En Cours</option>
-                                                <option value="Approuvé">✅ Approuvé</option>
-                                                <option value="Refusé">❌ Refusé</option>
+                                                <option value="En Cours">En Cours</option>
+                                                <option value="Approuvé">Approuvé</option>
+                                                <option value="Refusé">Refusé</option>
                                             </select>
                                         </td>
 
                                         {/* Date */}
-                                        <td className="px-4 py-3 whitespace-nowrap text-sm" style={{ color: '#4a4a4a' }}>
+                                        <td className="px-2 py-1 whitespace-nowrap text-gray-500">
                                             {formatDate(sub.created_at)}
                                         </td>
 
                                         {/* Photo */}
-                                        <td className="px-4 py-3 whitespace-nowrap">
+                                        <td className="px-2 py-1 whitespace-nowrap">
                                             {sub.photo_path ? (
                                                 <button
                                                     onClick={() => openPreview(sub.photo_path)}
-                                                    className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-200 hover:border-blue-500 transition-colors flex items-center justify-center bg-gray-50"
+                                                    className="w-8 h-8 rounded-full overflow-hidden border border-gray-200 hover:border-blue-500 transition-colors flex items-center justify-center bg-gray-50"
                                                 >
                                                     {sub.photo_path.toLowerCase().endsWith('.pdf') ? (
-                                                        <FileText size={24} className="text-red-500" />
+                                                        <FileText size={14} className="text-red-500" />
                                                     ) : (
                                                         <img
                                                             src={`/uploads/${sub.photo_path}`}
@@ -581,14 +606,14 @@ const AdminDashboard = () => {
                                                     )}
                                                 </button>
                                             ) : (
-                                                <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
-                                                    <ImageIcon size={24} className="text-gray-400" />
+                                                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                                                    <ImageIcon size={14} className="text-gray-400" />
                                                 </div>
                                             )}
                                         </td>
 
                                         {/* Nom Complet */}
-                                        <td className="px-4 py-3 min-w-[200px]">
+                                        <td className="px-2 py-1 max-w-[120px] truncate" title={sub.full_name}>
                                             <EditableCell
                                                 value={sub.full_name}
                                                 onSave={(value) => updateField(sub.id, 'full_name', value)}
@@ -597,7 +622,7 @@ const AdminDashboard = () => {
                                         </td>
 
                                         {/* Téléphone */}
-                                        <td className="px-4 py-3 min-w-[150px]">
+                                        <td className="px-2 py-1 max-w-[100px] truncate" title={sub.phone}>
                                             <EditableCell
                                                 value={sub.phone}
                                                 onSave={(value) => updateField(sub.id, 'phone', value)}
@@ -606,7 +631,7 @@ const AdminDashboard = () => {
                                         </td>
 
                                         {/* Email */}
-                                        <td className="px-4 py-3 min-w-[200px]">
+                                        <td className="px-2 py-1 max-w-[120px] truncate" title={sub.email}>
                                             <EditableCell
                                                 value={sub.email}
                                                 onSave={(value) => updateField(sub.id, 'email', value)}
@@ -615,7 +640,7 @@ const AdminDashboard = () => {
                                         </td>
 
                                         {/* Rôle */}
-                                        <td className="px-4 py-3 min-w-[150px]">
+                                        <td className="px-2 py-1 max-w-[80px] truncate" title={sub.role}>
                                             <EditableCell
                                                 value={sub.role}
                                                 onSave={(value) => updateField(sub.id, 'role', value)}
@@ -625,7 +650,7 @@ const AdminDashboard = () => {
                                         </td>
 
                                         {/* Type Contrat */}
-                                        <td className="px-4 py-3 min-w-[150px]">
+                                        <td className="px-2 py-1 max-w-[80px] truncate" title={sub.contract_type}>
                                             <EditableCell
                                                 value={sub.contract_type || '-'}
                                                 onSave={(value) => updateField(sub.id, 'contract_type', value)}
@@ -635,7 +660,7 @@ const AdminDashboard = () => {
                                         </td>
 
                                         {/* Ville Agence */}
-                                        <td className="px-4 py-3 min-w-[150px]">
+                                        <td className="px-2 py-1 max-w-[80px] truncate" title={sub.agency_city}>
                                             <EditableCell
                                                 value={sub.agency_city}
                                                 onSave={(value) => updateField(sub.id, 'agency_city', value)}
@@ -644,7 +669,7 @@ const AdminDashboard = () => {
                                         </td>
 
                                         {/* Manager Direct */}
-                                        <td className="px-4 py-3 min-w-[180px]">
+                                        <td className="px-2 py-1 max-w-[80px] truncate" title={sub.direct_manager_name}>
                                             <EditableCell
                                                 value={sub.direct_manager_name || '-'}
                                                 onSave={(value) => updateField(sub.id, 'direct_manager_name', value)}
@@ -653,7 +678,7 @@ const AdminDashboard = () => {
                                         </td>
 
                                         {/* Directeur */}
-                                        <td className="px-4 py-3 min-w-[180px]">
+                                        <td className="px-2 py-1 max-w-[80px] truncate" title={sub.director_name}>
                                             <EditableCell
                                                 value={sub.director_name || '-'}
                                                 onSave={(value) => updateField(sub.id, 'director_name', value)}
@@ -662,7 +687,7 @@ const AdminDashboard = () => {
                                         </td>
 
                                         {/* Animateur Réseau */}
-                                        <td className="px-4 py-3 min-w-[180px]">
+                                        <td className="px-2 py-1 max-w-[80px] truncate" title={sub.network_animator_name}>
                                             <EditableCell
                                                 value={sub.network_animator_name || '-'}
                                                 onSave={(value) => updateField(sub.id, 'network_animator_name', value)}
@@ -671,7 +696,7 @@ const AdminDashboard = () => {
                                         </td>
 
                                         {/* Date Début */}
-                                        <td className="px-4 py-3 min-w-[150px]">
+                                        <td className="px-2 py-1 w-20 truncate">
                                             <EditableCell
                                                 value={sub.start_date ? sub.start_date.split('T')[0] : ''}
                                                 onSave={(value) => updateField(sub.id, 'start_date', value)}
@@ -680,7 +705,7 @@ const AdminDashboard = () => {
                                         </td>
 
                                         {/* Code Équipe */}
-                                        <td className="px-4 py-3 min-w-[120px]">
+                                        <td className="px-2 py-1 w-16 truncate">
                                             <EditableCell
                                                 value={sub.team_code}
                                                 onSave={(value) => updateField(sub.id, 'team_code', value)}
@@ -692,79 +717,92 @@ const AdminDashboard = () => {
 
                                         {/* Test Fibre */}
                                         {activeTab === 'Fibre' && (
-                                            <td className="px-4 py-3 whitespace-nowrap text-center">
+                                            <td className="px-2 py-1 whitespace-nowrap text-center">
                                                 <button
                                                     onClick={() => updateField(sub.id, 'fiber_test_done', !sub.fiber_test_done)}
-                                                    className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${sub.fiber_test_done
+                                                    className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${sub.fiber_test_done
                                                         ? 'bg-green-500 border-green-500'
                                                         : 'bg-white border-gray-300 hover:border-gray-400'
                                                         }`}
                                                 >
-                                                    {sub.fiber_test_done && <CheckCircle size={14} className="text-white" />}
+                                                    {sub.fiber_test_done && <CheckCircle size={10} className="text-white" />}
                                                 </button>
                                             </td>
                                         )}
 
                                         {/* Documents */}
-                                        <td className="px-4 py-3 whitespace-nowrap">
-                                            <div className="flex items-center space-x-2">
+                                        <td className="px-2 py-1 whitespace-nowrap">
+                                            <div className="flex items-center space-x-1">
                                                 {sub.id_card_front_path && (
                                                     <button
                                                         onClick={() => openPreview(sub.id_card_front_path, 'pdf')}
-                                                        className="p-2 hover:bg-blue-50 rounded transition-colors"
-                                                        title="Carte d'identité recto"
+                                                        className="p-1 hover:bg-blue-50 rounded transition-colors"
+                                                        title="CNI R"
                                                     >
-                                                        <FileText size={16} style={{ color: '#3b82f6' }} />
+                                                        <FileText size={14} className="text-blue-500" />
                                                     </button>
                                                 )}
                                                 {sub.id_card_back_path && (
                                                     <button
                                                         onClick={() => openPreview(sub.id_card_back_path, 'pdf')}
-                                                        className="p-2 hover:bg-blue-50 rounded transition-colors"
-                                                        title="Carte d'identité verso"
+                                                        className="p-1 hover:bg-blue-50 rounded transition-colors"
+                                                        title="CNI V"
                                                     >
-                                                        <FileText size={16} style={{ color: '#3b82f6' }} />
+                                                        <FileText size={14} className="text-blue-500" />
                                                     </button>
                                                 )}
                                                 {sub.signature_path && (
                                                     <button
                                                         onClick={() => openPreview(sub.signature_path, 'image')}
-                                                        className="p-2 hover:bg-purple-50 rounded transition-colors"
-                                                        title="Signature"
+                                                        className="p-1 hover:bg-purple-50 rounded transition-colors"
+                                                        title="Sig"
                                                     >
-                                                        <Eye size={16} style={{ color: '#9333ea' }} />
+                                                        <Eye size={14} className="text-purple-600" />
                                                     </button>
                                                 )}
                                                 {sub.signed_pdf_path && (
                                                     <button
                                                         onClick={() => openPreview(sub.signed_pdf_path, 'pdf')}
-                                                        className="p-2 hover:bg-red-50 rounded transition-colors"
-                                                        title="PDF signé"
+                                                        className="p-1 hover:bg-red-50 rounded transition-colors"
+                                                        title="PDF Sig"
                                                     >
-                                                        <Download size={16} style={{ color: '#e63946' }} />
+                                                        <Download size={14} className="text-red-500" />
                                                     </button>
                                                 )}
                                                 {sub.signed_charte_path && (
                                                     <button
                                                         onClick={() => openPreview(sub.signed_charte_path, 'pdf')}
-                                                        className="p-2 hover:bg-amber-50 rounded transition-colors"
-                                                        title="Charte signée"
+                                                        className="p-1 hover:bg-amber-50 rounded transition-colors"
+                                                        title="Charte"
                                                     >
-                                                        <FileText size={16} style={{ color: '#d97706' }} />
+                                                        <FileText size={14} className="text-amber-500" />
                                                     </button>
                                                 )}
                                             </div>
                                         </td>
 
                                         {/* Actions */}
-                                        <td className="px-4 py-3 whitespace-nowrap text-center">
-                                            <button
-                                                onClick={() => deleteSubmission(sub.id)}
-                                                className="p-2 hover:bg-red-50 rounded-lg transition-colors group"
-                                                title="Supprimer"
-                                            >
-                                                <Trash2 size={18} className="text-gray-400 group-hover:text-red-600 transition-colors" />
-                                            </button>
+                                        <td className="px-2 py-1 whitespace-nowrap text-center">
+                                            <div className="flex items-center justify-center space-x-1">
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedSubmissionId(sub.id);
+                                                        setRefusalReason('');
+                                                        setShowRefusalModal(true);
+                                                    }}
+                                                    className="p-1 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title="Refuser"
+                                                >
+                                                    <XCircle size={14} />
+                                                </button>
+                                                <button
+                                                    onClick={() => deleteSubmission(sub.id)}
+                                                    className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title="Supprimer"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -782,27 +820,61 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Pagination Controls */}
-                <div className="flex items-center justify-between mt-6 bg-white p-4 rounded-xl shadow-sm">
-                    <div className="text-sm text-gray-500">
-                        Affichage de {submissions.length} sur {totalItems} résultats
+                <div className="flex items-center justify-between mt-4 bg-white p-2 rounded-xl shadow-sm">
+                    <div className="text-xs text-gray-500">
+                        Total: {totalItems}
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-1">
+                        <button
+                            onClick={() => setCurrentPage(1)}
+                            disabled={currentPage === 1}
+                            className="p-1.5 rounded border hover:bg-gray-50 disabled:opacity-50"
+                            title="Première page"
+                        >
+                            <ChevronsLeft size={16} />
+                        </button>
                         <button
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                             disabled={currentPage === 1}
-                            className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="p-1.5 rounded border hover:bg-gray-50 disabled:opacity-50"
+                            title="Page précédente"
                         >
-                            <ChevronLeft size={20} />
+                            <ChevronLeft size={16} />
                         </button>
-                        <span className="px-4 py-2 text-sm font-medium bg-gray-50 rounded-lg">
-                            Page {currentPage} sur {totalPages}
-                        </span>
+
+                        {getPaginationRange(totalPages, currentPage).map((value, idx) => {
+                            if (value === "... " || value === " ...") {
+                                return <span key={idx} className="px-2 text-gray-400">...</span>;
+                            }
+                            return (
+                                <button
+                                    key={idx}
+                                    onClick={() => setCurrentPage(value)}
+                                    className={`px-3 py-1 rounded text-xs font-semibold ${currentPage === value
+                                        ? 'bg-red-600 text-white'
+                                        : 'bg-white text-gray-700 hover:bg-gray-50 border'
+                                        }`}
+                                >
+                                    {value}
+                                </button>
+                            );
+                        })}
+
                         <button
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             disabled={currentPage === totalPages}
-                            className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="p-1.5 rounded border hover:bg-gray-50 disabled:opacity-50"
+                            title="Page suivante"
                         >
-                            <ChevronRight size={20} />
+                            <ChevronRight size={16} />
+                        </button>
+                        <button
+                            onClick={() => setCurrentPage(totalPages)}
+                            disabled={currentPage === totalPages}
+                            className="p-1.5 rounded border hover:bg-gray-50 disabled:opacity-50"
+                            title="Dernière page"
+                        >
+                            <ChevronsRight size={16} />
                         </button>
                     </div>
                 </div>
