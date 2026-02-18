@@ -111,6 +111,7 @@ const AdminDashboard = () => {
 
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('type', activeTab); // Pass current tab as default type
 
         try {
             setLoading(true);

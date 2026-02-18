@@ -576,7 +576,13 @@ app.post('/api/submissions/import', importUpload.single('file'), async (req, res
                 const agency_city = getValue(row, 'agency_city', 'Ville Agence', 'Ville');
                 const team_code = getValue(row, 'team_code', 'Code équipe', 'Code Equipe');
                 const start_date_raw = getValue(row, 'start_date', 'Date de début', 'Date Debut');
-                const type = getValue(row, 'type', 'Type') || 'Fibre'; // Default to Fibre if missing
+
+                // Determine type: Explicit in CSV > Dashboard Context > Default Fibre
+                let type = getValue(row, 'type', 'Type');
+                if (!type && req.body.type) {
+                    type = req.body.type;
+                }
+                type = type || 'Fibre';
 
                 // Essential validation
                 if (!full_name || !email) {
