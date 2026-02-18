@@ -53,8 +53,9 @@ const AdminDashboard = () => {
 
     // Password Modal for Actions
     const [showPasswordModal, setShowPasswordModal] = useState(false);
-    const [passwordAction, setPasswordAction] = useState(null); // { type: 'delete' | 'bulk_delete', id?: number, tab?: string }
+    const [passwordAction, setPasswordAction] = useState(null); // { type: 'delete' | 'bulk_delete' | 'import', id?: number, tab?: string, file?: File }
     const [actionPassword, setActionPassword] = useState('');
+    const [pendingImportFile, setPendingImportFile] = useState(null);
 
     const handleLogin = (e) => {
         e.preventDefault();
@@ -272,12 +273,16 @@ const AdminDashboard = () => {
                 } else {
                     alert('Erreur lors de la suppression');
                 }
+            } else if (passwordAction.type === 'import') {
+                await handleImportSubmit();
             }
         } catch (error) {
             console.error('Error executing action:', error);
             alert('Une erreur est survenue');
         } finally {
-            setLoading(false);
+            if (passwordAction?.type !== 'import') { // Import handles its own cleanup/loading
+                setLoading(false);
+            }
             setPasswordAction(null);
             setActionPassword('');
         }
@@ -485,6 +490,7 @@ const AdminDashboard = () => {
                             <button
                                 onClick={handleImportClick}
                                 className="px-6 py-3 bg-[#2d2d2d] text-white rounded-xl font-semibold hover:bg-black transition-all flex items-center space-x-2 shadow-sm hover:shadow-md"
+                                title="Importer avec mot de passe"
                             >
                                 <Upload size={20} />
                                 <span>Importer</span>
