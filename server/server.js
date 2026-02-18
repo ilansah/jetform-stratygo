@@ -252,19 +252,32 @@ app.put('/api/submissions/:id', async (req, res) => {
     }
 });
 
-// 3. Get All Accreditations (Admin) - Paginated
+// 3. Get All Accreditations (Admin) - Paginated & Filtered
 app.get('/api/submissions', async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 50;
+        const type = req.query.type; // 'Fibre' or 'Energie'
         const offset = (page - 1) * limit;
 
+        let countQuery = 'SELECT COUNT(*) as total FROM accreditations';
+        let dataQuery = 'SELECT * FROM accreditations';
+        const queryParams = [];
+
+        if (type && ['Fibre', 'Energie'].includes(type)) {
+            countQuery += ' WHERE type = ?';
+            dataQuery += ' WHERE type = ?';
+            queryParams.push(type);
+        }
+
+        dataQuery += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
+
         // Get total count
-        const [countResult] = await pool.query('SELECT COUNT(*) as total FROM accreditations');
+        const [countResult] = await pool.query(countQuery, type ? [type] : []);
         const total = countResult[0].total;
 
         // Get paginated data
-        const [rows] = await pool.query('SELECT * FROM accreditations ORDER BY created_at DESC LIMIT ? OFFSET ?', [limit, offset]);
+        const [rows] = await pool.query(dataQuery, [...queryParams, limit, offset]);
 
         res.json({
             data: rows,
