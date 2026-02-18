@@ -258,25 +258,45 @@ app.get('/api/submissions', async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 50;
         const type = req.query.type; // 'Fibre' or 'Energie'
+        const search = req.query.search;
+        const status = req.query.status;
         const offset = (page - 1) * limit;
 
-        let countQuery = 'SELECT COUNT(*) as total FROM accreditations';
-        let dataQuery = 'SELECT * FROM accreditations';
+        console.log('GET /api/submissions Params:', { page, limit, type, search, status });
+
+        let countQuery = 'SELECT COUNT(*) as total FROM accreditations WHERE 1=1';
+        let dataQuery = 'SELECT * FROM accreditations WHERE 1=1';
         const queryParams = [];
 
         if (type && ['Fibre', 'Energie'].includes(type)) {
-            countQuery += ' WHERE type = ?';
-            dataQuery += ' WHERE type = ?';
+            countQuery += ' AND type = ?';
+            dataQuery += ' AND type = ?';
             queryParams.push(type);
+        }
+
+        if (status && status !== 'all') {
+            countQuery += ' AND status = ?';
+            dataQuery += ' AND status = ?';
+            queryParams.push(status);
+        }
+
+        if (search) {
+            const searchTerm = `%${search}%`;
+            const searchClause = ' AND (full_name LIKE ? OR email LIKE ? OR phone LIKE ?)';
+            countQuery += searchClause;
+            dataQuery += searchClause;
+
+            // We need to push search term 3 times
+            queryParams.push(searchTerm, searchTerm, searchTerm);
         }
 
         dataQuery += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
 
-        // Get total count
-        const [countResult] = await pool.query(countQuery, type ? [type] : []);
+        // Get total count (Running query with same params)
+        const [countResult] = await pool.query(countQuery, queryParams);
         const total = countResult[0].total;
 
-        // Get paginated data
+        // Get paginated data (Running query with params + limit/offset)
         const [rows] = await pool.query(dataQuery, [...queryParams, limit, offset]);
 
         res.json({

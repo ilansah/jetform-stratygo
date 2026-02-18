@@ -26,6 +26,11 @@ const AdminDashboard = () => {
     const [password, setPassword] = useState('');
     const [loginError, setLoginError] = useState('');
 
+    // Password Modal for Actions
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [passwordAction, setPasswordAction] = useState(null); // { type: 'delete' | 'bulk_delete', id?: number, tab?: string }
+    const [actionPassword, setActionPassword] = useState('');
+
     const handleLogin = (e) => {
         e.preventDefault();
         if (password === 'STRAT-jotform59') {
@@ -40,14 +45,33 @@ const AdminDashboard = () => {
 
     useEffect(() => {
         if (isAuthenticated) {
-            fetchSubmissions(currentPage);
+            // Debounce search could be better, but for now just fetch
+            const timer = setTimeout(() => {
+                fetchSubmissions(1, activeTab);
+            }, 300);
+            return () => clearTimeout(timer);
         }
-    }, [isAuthenticated, currentPage]);
+    }, [isAuthenticated, activeTab, searchTerm, statusFilter]);
 
-    const fetchSubmissions = async (page = 1) => {
+    // Trigger pagination change separately to avoid loop if I added currentPage to above dependency
+    useEffect(() => {
+        if (isAuthenticated) {
+            fetchSubmissions(currentPage, activeTab);
+        }
+    }, [currentPage]);
+
+    const fetchSubmissions = async (page = 1, type = activeTab) => {
         setLoading(true);
         try {
-            const response = await fetch(`/api/submissions?page=${page}&limit=${itemsPerPage}`);
+            const queryParams = new URLSearchParams({
+                page,
+                limit: itemsPerPage,
+                type,
+                status: statusFilter !== 'all' ? statusFilter : '',
+                search: searchTerm
+            });
+
+            const response = await fetch(`/api/submissions?${queryParams.toString()}`);
             const result = await response.json();
 
             if (result.pagination) {
@@ -159,34 +183,13 @@ const AdminDashboard = () => {
         }
     };
 
-    const deleteSubmission = async (id) => {
-        if (!confirm('Êtes-vous sûr de vouloir supprimer cette accréditation ?')) return;
-
-        const password = prompt("Mot de passe administrateur :");
-        if (password !== '03071982') {
-            alert('Mot de passe incorrect');
-            return;
-        }
-
-        try {
-            const response = await fetch(`/api/submissions/${id}`, { method: 'DELETE' });
-            if (response.ok) {
-                setSubmissions(submissions.filter(sub => sub.id !== id));
-            } else {
-                alert('Erreur lors de la suppression');
-            }
-        } catch (error) {
-            console.error('Error deleting submission:', error);
-        }
-    };
-
     // Modal state for refusal
     const [showRefusalModal, setShowRefusalModal] = useState(false);
     const [selectedSubmissionId, setSelectedSubmissionId] = useState(null);
     const [refusalReason, setRefusalReason] = useState('');
 
     const deleteSubmissionsByType = async (type) => {
-        const count = submissions.filter(sub => (sub.type || 'Fibre') === type).length;
+        const count = totalItems; // Use totalItems from pagination which is accurate for the current tab
         if (count === 0) {
             alert(`Aucune donnée ${type} à supprimer.`);
             return;
@@ -196,29 +199,62 @@ const AdminDashboard = () => {
             return;
         }
 
-        if (!confirm(`Êtes-vous VRAIMENT sûr ?\n\nConfirmez la suppression IMMÉDIATE et DÉFINITIVE de ${count} dossiers ${type}.`)) {
+        // Open Password Modal instead of prompt
+        setPasswordAction({ type: 'bulk_delete', tab: type });
+        setActionPassword('');
+        setShowPasswordModal(true);
+    };
+
+    const deleteSubmission = async (id) => {
+        if (!confirm('Êtes-vous sûr de vouloir supprimer cette accréditation ?')) return;
+
+        // Open Password Modal instead of prompt
+        setPasswordAction({ type: 'delete', id });
+        setActionPassword('');
+        setShowPasswordModal(true);
+    };
+
+    const handlePasswordSubmit = async (e) => {
+        e.preventDefault();
+
+        if (actionPassword !== '03071982') {
+            alert('Mot de passe incorrect');
             return;
         }
 
-        const password = prompt("Veuillez entrer le mot de passe administrateur pour confirmer la suppression (03071982) :");
-        if (!password) return;
+        setShowPasswordModal(false);
+        setLoading(true);
 
         try {
-            const response = await fetch(`/api/submissions/type/${type}`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password })
-            });
+            if (passwordAction.type === 'bulk_delete') {
+                const response = await fetch(`/api/submissions/type/${passwordAction.tab}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: actionPassword })
+                });
 
-            if (response.ok) {
-                setSubmissions(submissions.filter(sub => (sub.type || 'Fibre') !== type));
-                alert(`Toutes les données ${type} ont été supprimées.`);
-            } else {
-                alert('Erreur lors de la suppression');
+                if (response.ok) {
+                    alert(`Toutes les données ${passwordAction.tab} ont été supprimées.`);
+                    fetchSubmissions(1, activeTab); // Refresh
+                } else {
+                    alert('Erreur lors de la suppression');
+                }
+            } else if (passwordAction.type === 'delete') {
+                const response = await fetch(`/api/submissions/${passwordAction.id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    // Update local state is safer than refetch logic here to avoid page jumps, but refetch is cleaner
+                    fetchSubmissions(currentPage, activeTab);
+                } else {
+                    alert('Erreur lors de la suppression');
+                }
             }
         } catch (error) {
-            console.error('Error deleting type:', error);
-            alert('Erreur lors de la suppression');
+            console.error('Error executing action:', error);
+            alert('Une erreur est survenue');
+        } finally {
+            setLoading(false);
+            setPasswordAction(null);
+            setActionPassword('');
         }
     };
 
@@ -289,17 +325,7 @@ const AdminDashboard = () => {
         });
     };
 
-    const filteredSubmissions = submissions.filter(sub => {
-        const matchesType = (sub.type || 'Fibre') === activeTab;
-        const matchesSearch = !searchTerm ||
-            sub.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            sub.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            sub.phone?.includes(searchTerm);
-
-        const matchesStatus = statusFilter === 'all' || sub.status === statusFilter;
-
-        return matchesType && matchesSearch && matchesStatus;
-    });
+    const filteredSubmissions = submissions; // No need to filter locally anymore, backend does it
 
     if (!isAuthenticated) {
         return (
@@ -875,6 +901,49 @@ const AdminDashboard = () => {
                                     Confirmer le refus
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Secure Password Modal */}
+                {showPasswordModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                        <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 animate-in fade-in zoom-in duration-200">
+                            <h3 className="text-xl font-bold mb-2" style={{ color: '#2d2d2d' }}>Sécurité</h3>
+                            <p className="text-sm text-gray-500 mb-6">
+                                Veuillez entrer le mot de passe administrateur pour confirmer cette action sensible.
+                            </p>
+                            <form onSubmit={handlePasswordSubmit}>
+                                <div className="mb-6">
+                                    <input
+                                        type="password"
+                                        value={actionPassword}
+                                        onChange={(e) => setActionPassword(e.target.value)}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 text-center text-lg tracking-widest"
+                                        placeholder="••••••••"
+                                        autoFocus
+                                    />
+                                </div>
+                                <div className="flex justify-end space-x-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowPasswordModal(false);
+                                            setPasswordAction(null);
+                                            setActionPassword('');
+                                        }}
+                                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                                    >
+                                        Annuler
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium shadow-md shadow-red-200"
+                                    >
+                                        Confirmer
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 )}
