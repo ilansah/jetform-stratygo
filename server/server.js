@@ -529,6 +529,147 @@ app.get('/api/submissions/export/excel', async (req, res) => {
     }
 });
 
+// 6. Import from CSV/Excel (Admin)
+const importUpload = multer({ storage: multer.memoryStorage() });
+
+app.post('/api/submissions/import', importUpload.single('file'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        console.log('📂 Processing Import File:', req.file.originalname);
+
+        // Read file from buffer
+        const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+
+        // Convert to JSON
+        const rawData = XLSX.utils.sheet_to_json(worksheet);
+
+        console.log(`📊 Found ${rawData.length} rows`);
+
+        if (rawData.length === 0) {
+            return res.status(400).json({ error: 'File is empty' });
+        }
+
+        let successCount = 0;
+        let errorCount = 0;
+        const errors = [];
+
+        // Mapping function helper
+        const getValue = (row, ...keys) => {
+            for (const key of keys) {
+                if (row[key] !== undefined) return row[key];
+            }
+            return null;
+        };
+
+        for (const [index, row] of rawData.entries()) {
+            try {
+                // Map fields - support both English from DB and French from Export
+                const full_name = getValue(row, 'full_name', 'Nom complet', 'Nom Complet', 'Nom');
+                const email = getValue(row, 'email', 'Email', 'E-mail');
+                const phone = getValue(row, 'phone', 'Téléphone', 'Telephone', 'Tel');
+                const role = getValue(row, 'role', 'Rôle', 'Role');
+                const agency_city = getValue(row, 'agency_city', 'Ville Agence', 'Ville');
+                const team_code = getValue(row, 'team_code', 'Code équipe', 'Code Equipe');
+                const start_date_raw = getValue(row, 'start_date', 'Date de début', 'Date Debut');
+                const type = getValue(row, 'type', 'Type') || 'Fibre'; // Default to Fibre if missing
+
+                // Essential validation
+                if (!full_name || !email) {
+                    throw new Error('Nom et Email obligatoires');
+                }
+
+                // Handle Date Parsing (Excel uses numbers often)
+                let start_date = new Date(); // Default to now if invalid
+                if (start_date_raw) {
+                    if (typeof start_date_raw === 'number') {
+                        // Excel serial date
+                        start_date = new Date(Math.round((start_date_raw - 25569) * 86400 * 1000));
+                    } else {
+                        // String date (DD/MM/YYYY or similar)
+                        // Try standard constructor first
+                        const parsed = new Date(start_date_raw);
+                        if (!isNaN(parsed)) {
+                            start_date = parsed;
+                        } else if (typeof start_date_raw === 'string' && start_date_raw.includes('/')) {
+                            // Handle French format DD/MM/YYYY
+                            const parts = start_date_raw.split('/');
+                            if (parts.length === 3) {
+                                start_date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+                            }
+                        }
+                    }
+                }
+
+                // Apply GVD Rule
+                let hr_email = getValue(row, 'hr_email', 'Email RH') || '';
+                if (team_code && String(team_code).toUpperCase() === 'GVD') {
+                    hr_email = 'accredgovad@ikmail.com';
+                }
+
+                // Insert into Query
+                const query = `
+                    INSERT INTO accreditations 
+                    (full_name, phone, email, address, role, agency_city, 
+                    direct_manager_name, director_name, network_animator_name, 
+                    start_date, team_code, manager_email, hr_email, 
+                    fiber_test_done, terms_accepted, type, status)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `;
+
+                const values = [
+                    full_name,
+                    phone || '',
+                    email,
+                    getValue(row, 'address', 'Adresse') || '', // Address might be missing
+                    role || 'Vendeur',
+                    agency_city || '',
+                    getValue(row, 'direct_manager_name', 'Manager Direct', 'Manager'),
+                    getValue(row, 'director_name', 'Directeur'),
+                    getValue(row, 'network_animator_name', 'Animateur Réseau', 'Animateur'),
+                    start_date,
+                    team_code || '',
+                    getValue(row, 'manager_email', 'Email gestionnaire', 'Email Manager') || '',
+                    hr_email,
+                    0, // fiber_test_done
+                    1, // terms_accepted (Assume yes for import?) - keeping it safe or 0
+                    ['Fibre', 'Energie'].includes(type) ? type : 'Fibre',
+                    'En Cours'
+                ];
+
+                // Adjust terms_accepted based on data
+                values[14] = getValue(row, 'terms_accepted', 'Conditions acceptées') === 'Oui' ? 1 : 0;
+                // Also check fiber test
+                values[13] = getValue(row, 'fiber_test_done', 'Test fibre effectué') === 'Oui' ? 1 : 0;
+
+
+                await pool.execute(query, values);
+                successCount++;
+
+            } catch (err) {
+                console.error(`Row ${index + 2} error:`, err.message);
+                errorCount++;
+                errors.push(`Ligne ${index + 2}: ${err.message}`);
+            }
+        }
+
+        res.json({
+            message: 'Import terminé',
+            success: successCount,
+            failed: errorCount,
+            errors: errors
+        });
+
+    } catch (error) {
+        console.error('Error importing file:', error);
+        res.status(500).json({ error: 'Erreur lors de l\'importation', details: error.message });
+    }
+});
+
 // --- Remote Database Maintenance (Run this to fix schema) ---
 app.get('/api/maintenance/migrate', async (req, res) => {
     const results = [];

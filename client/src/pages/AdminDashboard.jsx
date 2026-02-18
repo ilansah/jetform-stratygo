@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Header from '../components/Header';
 import EditableCell from '../components/EditableCell';
-import { Eye, FileText, CheckCircle, Clock, Image as ImageIcon, Download, Search, FileSpreadsheet, XCircle, Trash2 } from 'lucide-react';
+import { Eye, FileText, CheckCircle, Clock, Image as ImageIcon, Download, Search, FileSpreadsheet, XCircle, Trash2, Upload } from 'lucide-react';
 import PdfPreview from '../components/PdfPreview';
 import fibreIcon from '../assets/telecoms.png';
 import energieIcon from '../assets/picto_energie.png';
@@ -82,6 +82,63 @@ const AdminDashboard = () => {
 
     const exportToExcel = () => {
         window.open('/api/submissions/export/excel', '_blank');
+    };
+
+    // Import functionality
+    const fileInputRef = React.useRef(null);
+
+    const handleImportClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = async (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        // Validation: Check extension
+        const validExtensions = ['.csv', '.xlsx', '.xls'];
+        const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+
+        if (!validExtensions.includes(fileExtension)) {
+            alert('Format de fichier invalide. Veuillez importer un fichier CSV ou Excel (.xlsx, .xls).');
+            return;
+        }
+
+        if (!confirm(`Voulez-vous vraiment importer le fichier "${file.name}" ?\n\nCela ajoutera de nouvelles accréditations à la base de données.`)) {
+            event.target.value = ''; // Reset input
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            setLoading(true);
+            const response = await fetch('/api/submissions/import', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                let message = result.message + `\n\n✅ Succès: ${result.success}`;
+                if (result.failed > 0) {
+                    message += `\n❌ Échecs: ${result.failed}`;
+                    message += `\n\nDétails des erreurs:\n` + result.errors.slice(0, 5).join('\n') + (result.errors.length > 5 ? '\n...' : '');
+                }
+                alert(message);
+                fetchSubmissions(); // Refresh list
+            } else {
+                alert(`Erreur lors de l'import: ${result.error || result.message}`);
+            }
+        } catch (error) {
+            console.error('Error importing file:', error);
+            alert('Une erreur est survenue lors de l\'importation.');
+        } finally {
+            setLoading(false);
+            event.target.value = ''; // Reset input
+        }
     };
 
     // Modal state for refusal
@@ -319,6 +376,24 @@ const AdminDashboard = () => {
                                 <option value="Approuvé">Approuvé</option>
                                 <option value="Refusé">Refusé</option>
                             </select>
+                        </div>
+
+                        {/* Import Button */}
+                        <div className="flex space-x-3">
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                className="hidden"
+                                accept=".csv, .xlsx, .xls"
+                                onChange={handleFileChange}
+                            />
+                            <button
+                                onClick={handleImportClick}
+                                className="px-6 py-3 bg-[#2d2d2d] text-white rounded-xl font-semibold hover:bg-black transition-all flex items-center space-x-2 shadow-sm hover:shadow-md"
+                            >
+                                <Upload size={20} />
+                                <span>Importer</span>
+                            </button>
                         </div>
 
                         {/* Export Buttons */}
