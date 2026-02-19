@@ -189,11 +189,15 @@ app.post('/api/submissions', upload.fields([
             res.status(201).json({ message: 'Submission successful', id: result.insertId });
         } catch (err) {
             console.error('❌ Database Insertion Error:', err);
-            const fs = require('fs');
-            const path = require('path');
-            const logPath = path.join(__dirname, 'server_error.log');
-            const logMessage = `[${new Date().toISOString()}] DB INSERT Error: ${err.message}\nStack: ${err.stack}\nQuery Values: ${JSON.stringify(values)}\n\n`;
-            fs.appendFileSync(logPath, logMessage);
+            try {
+                const fs = require('fs');
+                const path = require('path');
+                const logPath = path.join(__dirname, 'server_error.log');
+                const logMessage = `[${new Date().toISOString()}] DB INSERT Error: ${err.message}\nStack: ${err.stack}\nQuery Values: ${JSON.stringify(values)}\n\n`;
+                fs.appendFileSync(logPath, logMessage);
+            } catch (logErr) {
+                console.error('Failed to write to log file:', logErr);
+            }
             res.status(500).json({ error: 'Internal Server Error', details: err.message, sqlMessage: err.sqlMessage });
         }
     } catch (error) {
