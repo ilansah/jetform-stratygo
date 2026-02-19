@@ -189,15 +189,20 @@ app.post('/api/submissions', upload.fields([
             res.status(201).json({ message: 'Submission successful', id: result.insertId });
         } catch (err) {
             console.error('❌ Database Insertion Error:', err);
-            console.error('Query Values:', values);
             const fs = require('fs');
-            const logMessage = `[${new Date().toISOString()}] Error: ${err.message}\nStack: ${err.stack}\nValues: ${JSON.stringify(values)}\n\n`;
-            fs.appendFileSync('server_error.log', logMessage);
+            const path = require('path');
+            const logPath = path.join(__dirname, 'server_error.log');
+            const logMessage = `[${new Date().toISOString()}] DB INSERT Error: ${err.message}\nStack: ${err.stack}\nQuery Values: ${JSON.stringify(values)}\n\n`;
+            fs.appendFileSync(logPath, logMessage);
             res.status(500).json({ error: 'Internal Server Error', details: err.message, sqlMessage: err.sqlMessage });
         }
     } catch (error) {
-        // Upper level catch for file handling or other sync errors
         console.error('Error submitting form:', error);
+        const fs = require('fs');
+        const path = require('path');
+        const logPath = path.join(__dirname, 'server_error.log');
+        const logMessage = `[${new Date().toISOString()}] POST ROUTE OUTER Error: ${error.message}\nStack: ${error.stack}\n\n`;
+        fs.appendFileSync(logPath, logMessage);
         res.status(500).json({ error: 'Internal server error', details: error.message });
     }
 });
@@ -807,7 +812,13 @@ app.get(/.*/, (req, res) => {
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-    console.error('🔥 Global Error Handler Triggered:', err.message); // Log the full error
+    console.error('🔥 Global Error Handler Triggered:', err.message);
+    const fs = require('fs');
+    const path = require('path');
+    const logPath = path.join(__dirname, 'server_error.log');
+    const logMessage = `[${new Date().toISOString()}] GLOBAL HANDLER Error: ${err.message}\nStack: ${err.stack}\n\n`;
+    fs.appendFileSync(logPath, logMessage);
+
     if (err instanceof multer.MulterError) {
         return res.status(400).json({ error: 'Multer Error', details: err.message });
     }
