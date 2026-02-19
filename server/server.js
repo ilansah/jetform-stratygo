@@ -808,6 +808,24 @@ app.get('/api/maintenance/migrate', async (req, res) => {
     }
 });
 
+// Debug Route - REMOVE IN PRODUCTION AFTER FIXING
+const debugLogsHandler = (req, res) => {
+    const fs = require('fs');
+    const path = require('path');
+    const logPath = path.join(__dirname, 'server_error.log');
+
+    if (fs.existsSync(logPath)) {
+        const logs = fs.readFileSync(logPath, 'utf8');
+        res.setHeader('Content-Type', 'text/plain');
+        res.send(logs);
+    } else {
+        res.send('No error logs found.');
+    }
+};
+
+app.get('/api/debug-logs', debugLogsHandler);
+app.get('/api/debug-log', debugLogsHandler); // Handle typo
+
 // Start Server
 // Catch-all route for React (Must be last)
 app.get(/.*/, (req, res) => {
