@@ -833,7 +833,7 @@ app.use((err, req, res, next) => {
 });
 
 // Debug Route - REMOVE IN PRODUCTION AFTER FIXING
-app.get('/api/debug-logs', (req, res) => {
+const debugLogsHandler = (req, res) => {
     const fs = require('fs');
     const path = require('path');
     const logPath = path.join(__dirname, 'server_error.log');
@@ -845,7 +845,10 @@ app.get('/api/debug-logs', (req, res) => {
     } else {
         res.send('No error logs found.');
     }
-});
+};
+
+app.get('/api/debug-logs', debugLogsHandler);
+app.get('/api/debug-log', debugLogsHandler); // Handle typo
 
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
