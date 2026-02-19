@@ -2,6 +2,8 @@ CREATE TABLE IF NOT EXISTS accreditations (
     id INT AUTO_INCREMENT PRIMARY KEY,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     status ENUM('En Cours', 'Approuvé', 'Refusé') DEFAULT 'En Cours',
+    type ENUM('Fibre', 'Energie') DEFAULT 'Fibre',
+    contract_type VARCHAR(50),
     
     -- Personal Info
     full_name VARCHAR(255) NOT NULL,
@@ -32,5 +34,6 @@ CREATE TABLE IF NOT EXISTS accreditations (
     proxy_name VARCHAR(255),
     terms_accepted BOOLEAN NOT NULL DEFAULT 0,
     signature_path VARCHAR(255),
-    signed_pdf_path VARCHAR(255)
+    signed_pdf_path VARCHAR(255),
+    signed_charte_path VARCHAR(255)
 );

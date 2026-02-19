@@ -39,10 +39,67 @@ console.log('👉 DB_NAME from env:', process.env.DB_NAME);
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// --- DEBUGGING START ---
+const uploadsPath = path.resolve(__dirname, '../uploads');
+console.log('📂 UPLOADS PATH (Resolved):', uploadsPath);
+try {
+    if (fs.existsSync(uploadsPath)) {
+        console.log('✅ Uploads directory exists.');
+        const files = fs.readdirSync(uploadsPath);
+        console.log(`📄 Found ${files.length} files in uploads.`);
+    } else {
+        console.error('❌ Uploads directory does NOT exist at:', uploadsPath);
+    }
+} catch (err) {
+    console.error('❌ Error checking uploads dir:', err);
+}
+
+app.get('/api/debug/files', (req, res) => {
+    try {
+        const absolutePath = path.resolve(__dirname, '../uploads');
+        const exists = fs.existsSync(absolutePath);
+        let files = [];
+        let error = null;
+
+        if (exists) {
+            try {
+                files = fs.readdirSync(absolutePath).map(file => {
+                    const stats = fs.statSync(path.join(absolutePath, file));
+                    return {
+                        name: file,
+                        size: stats.size,
+                        created: stats.birthtime,
+                        modified: stats.mtime
+                    };
+                });
+            } catch (e) {
+                error = e.message;
+            }
+        }
+
+        res.json({
+            debug_info: {
+                dirname: __dirname,
+                resolved_uploads_path: absolutePath,
+                directory_exists: exists,
+                file_count: files.length,
+                files: files,
+                error: error,
+                env_port: process.env.PORT
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message, stack: err.stack });
+    }
+});
+// --- DEBUGGING END ---
+
 // Serve uploaded files statically
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/uploads', express.static(uploadsPath)); // Use resolved path
 // Fix: If file not found in uploads, return 404 instead of falling through to React index.html
 app.use('/uploads', (req, res) => {
+    console.error(`❌ 404 Not Found for /uploads request: ${req.url}`);
     res.status(404).send('File not found');
 });
 // Serve client public files (for PDF and other static assets)
