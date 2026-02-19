@@ -10,6 +10,19 @@ const dotenvResult = require('dotenv').config({ path: envPath });
 
 // In-memory log storage
 let lastServerError = null;
+let lastRequestLog = null;
+
+// Request Logger
+app.use((req, res, next) => {
+    lastRequestLog = {
+        timestamp: new Date().toISOString(),
+        method: req.method,
+        url: req.url,
+        body_keys: req.body ? Object.keys(req.body) : 'null'
+    };
+    console.log(`📥 ${req.method} ${req.url}`);
+    next();
+});
 
 console.log('🔍 SYSTEM DEBUG:');
 console.log('👉 Environment File Path:', envPath);
@@ -815,11 +828,14 @@ app.get('/api/maintenance/migrate', async (req, res) => {
 
 // Debug Route - REMOVE IN PRODUCTION AFTER FIXING
 const debugLogsHandler = (req, res) => {
-    if (lastServerError) {
-        res.json(lastServerError);
-    } else {
-        res.json({ message: 'No error logs recorded since last restart.', note: 'Ensure you triggered the error after the last server restart.' });
-    }
+    res.json({
+        lastServerError,
+        lastRequestLog,
+        env_check: {
+            DB_HOST: process.env.DB_HOST ? 'Set' : 'Missing',
+            DB_USER: process.env.DB_USER ? 'Set' : 'Missing'
+        }
+    });
 };
 
 app.get('/api/debug-logs', debugLogsHandler);
