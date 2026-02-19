@@ -8,6 +8,9 @@ const XLSX = require('xlsx');
 const envPath = path.join(__dirname, '../.env');
 const dotenvResult = require('dotenv').config({ path: envPath });
 
+// In-memory log storage
+let lastServerError = null;
+
 console.log('🔍 SYSTEM DEBUG:');
 console.log('👉 Environment File Path:', envPath);
 console.log('👉 Dotenv Result:', dotenvResult.error ? 'Error loading' : 'Success');
@@ -121,6 +124,7 @@ app.post('/api/submissions', upload.fields([
     { name: 'signed_pdf', maxCount: 1 },
     { name: 'signed_charte', maxCount: 1 }
 ]), async (req, res) => {
+    console.log('📌 POST /api/submissions received');
     try {
         const data = req.body;
         const files = req.files;
@@ -811,16 +815,10 @@ app.get('/api/maintenance/migrate', async (req, res) => {
 
 // Debug Route - REMOVE IN PRODUCTION AFTER FIXING
 const debugLogsHandler = (req, res) => {
-    const fs = require('fs');
-    const path = require('path');
-    const logPath = path.join(__dirname, 'server_error.log');
-
-    if (fs.existsSync(logPath)) {
-        const logs = fs.readFileSync(logPath, 'utf8');
-        res.setHeader('Content-Type', 'text/plain');
-        res.send(logs);
+    if (lastServerError) {
+        res.json(lastServerError);
     } else {
-        res.send('No error logs found.');
+        res.json({ message: 'No error logs recorded since last restart.', note: 'Ensure you triggered the error after the last server restart.' });
     }
 };
 
@@ -836,11 +834,14 @@ app.get(/.*/, (req, res) => {
 // Global Error Handler
 app.use((err, req, res, next) => {
     console.error('🔥 Global Error Handler Triggered:', err.message);
-    const fs = require('fs');
-    const path = require('path');
-    const logPath = path.join(__dirname, 'server_error.log');
-    const logMessage = `[${new Date().toISOString()}] GLOBAL HANDLER Error: ${err.message}\nStack: ${err.stack}\n\n`;
-    fs.appendFileSync(logPath, logMessage);
+
+    // Store error in memory
+    lastServerError = {
+        timestamp: new Date().toISOString(),
+        message: err.message,
+        stack: err.stack,
+        type: 'GLOBAL_HANDLER'
+    };
 
     if (err instanceof multer.MulterError) {
         return res.status(400).json({ error: 'Multer Error', details: err.message });
