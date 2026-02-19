@@ -208,8 +208,10 @@ app.put('/api/submissions/:id', async (req, res) => {
         // Build dynamic update query
         const allowedFields = [
             'full_name', 'phone', 'email', 'address', 'start_date',
-            'manager_name', 'team_code', 'manager_email', 'hr_email',
-            'fiber_test_done', 'proxy_name', 'terms_accepted', 'status'
+            'direct_manager_name', 'director_name', 'network_animator_name',
+            'team_code', 'manager_email', 'hr_email',
+            'fiber_test_done', 'proxy_name', 'terms_accepted', 'status',
+            'role', 'contract_type', 'agency_city'
         ];
 
         const updateFields = [];
