@@ -133,7 +133,6 @@ const PublicForm = () => {
         form.append('email', formData.email);
         form.append('address', `${formData.address_street}, ${formData.address_complement} ${formData.address_zip} ${formData.address_city}`);
         form.append('contract_type', formData.contract_type);
-        form.append('contract_type', formData.contract_type);
         form.append('role', formType === 'Energie' ? 'Vendeur' : formData.role); // Use 'Vendeur' for Energie, select for Fibre
         form.append('agency_city', formData.agency_city);
         form.append('direct_manager_name', formData.direct_manager_name || '');
