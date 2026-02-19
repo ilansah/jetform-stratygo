@@ -189,24 +189,25 @@ app.post('/api/submissions', upload.fields([
             res.status(201).json({ message: 'Submission successful', id: result.insertId });
         } catch (err) {
             console.error('❌ Database Insertion Error:', err);
-            try {
-                const fs = require('fs');
-                const path = require('path');
-                const logPath = path.join(__dirname, 'server_error.log');
-                const logMessage = `[${new Date().toISOString()}] DB INSERT Error: ${err.message}\nStack: ${err.stack}\nQuery Values: ${JSON.stringify(values)}\n\n`;
-                fs.appendFileSync(logPath, logMessage);
-            } catch (logErr) {
-                console.error('Failed to write to log file:', logErr);
-            }
+            // Store error in memory
+            lastServerError = {
+                timestamp: new Date().toISOString(),
+                message: err.message,
+                stack: err.stack,
+                values: values,
+                type: 'DB_INSERT_ERROR'
+            };
             res.status(500).json({ error: 'Internal Server Error', details: err.message, sqlMessage: err.sqlMessage });
         }
     } catch (error) {
         console.error('Error submitting form:', error);
-        const fs = require('fs');
-        const path = require('path');
-        const logPath = path.join(__dirname, 'server_error.log');
-        const logMessage = `[${new Date().toISOString()}] POST ROUTE OUTER Error: ${error.message}\nStack: ${error.stack}\n\n`;
-        fs.appendFileSync(logPath, logMessage);
+        // Store error in memory
+        lastServerError = {
+            timestamp: new Date().toISOString(),
+            message: error.message,
+            stack: error.stack,
+            type: 'POST_ROUTE_OUTER_ERROR'
+        };
         res.status(500).json({ error: 'Internal server error', details: error.message });
     }
 });
