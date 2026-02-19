@@ -133,7 +133,8 @@ const PublicForm = () => {
         form.append('email', formData.email);
         form.append('address', `${formData.address_street}, ${formData.address_complement} ${formData.address_zip} ${formData.address_city}`);
         form.append('contract_type', formData.contract_type);
-        form.append('role', 'Vendeur'); // Hardcoded role
+        form.append('contract_type', formData.contract_type);
+        form.append('role', formType === 'Energie' ? 'Vendeur' : formData.role); // Use 'Vendeur' for Energie, select for Fibre
         form.append('agency_city', formData.agency_city);
         form.append('direct_manager_name', formData.direct_manager_name || '');
         form.append('director_name', formData.director_name || '');
@@ -304,44 +305,83 @@ const PublicForm = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-0 md:pl-14">
                                     <Input label="Date de commencement" name="start_date" type="date" required value={formData.start_date} onChange={handleInputChange} />
 
-                                    {/* Contract Type Selection (Replaces Role) */}
-                                    <div className="mb-6 group">
-                                        <label className="block text-sm font-semibold text-stratygo-dark mb-2 ml-1 transition-colors group-hover:text-stratygo-dark">
-                                            Type de contrat du vendeur <span className="text-stratygo-dark">*</span>
-                                        </label>
-                                        <div className="relative">
-                                            <select
-                                                name="contract_type"
-                                                value={formData.contract_type}
-                                                onChange={handleInputChange}
-                                                required
-                                                className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-stratygo-dark/10 focus:border-stratygo-dark focus:bg-white transition-all duration-300 shadow-sm appearance-none cursor-pointer"
-                                            >
-                                                <option value="">Sélectionnez votre type de contrat</option>
-                                                <option value="VRP">VRP</option>
-                                                <option value="VDI">VDI</option>
-                                                <option value="CDI/CDD">CDI/CDD</option>
-                                                <option value="Auto-entrepreneur">Auto-entrepreneur</option>
-                                            </select>
-                                            <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
-                                                <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" fillRule="evenodd"></path></svg>
+                                    {/* Role Selection (Fibre Only) */}
+                                    {formType === 'Fibre' && (
+                                        <div className="mb-6 group">
+                                            <label className="block text-sm font-semibold text-stratygo-dark mb-2 ml-1 transition-colors group-hover:text-stratygo-dark">
+                                                Rôle <span className="text-stratygo-dark">*</span>
+                                            </label>
+                                            <div className="relative">
+                                                <select
+                                                    name="role"
+                                                    value={formData.role}
+                                                    onChange={handleInputChange}
+                                                    required
+                                                    className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-stratygo-dark/10 focus:border-stratygo-dark focus:bg-white transition-all duration-300 shadow-sm appearance-none cursor-pointer"
+                                                >
+                                                    <option value="">Sélectionnez votre rôle</option>
+                                                    <option value="Vendeur">Vendeur</option>
+                                                    <option value="Manager">Manager</option>
+                                                    <option value="Directeur">Directeur</option>
+                                                    <option value="Animateur Réseau">Animateur Réseau</option>
+                                                </select>
+                                                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
+                                                    <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" fillRule="evenodd"></path></svg>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    )}
 
-                                    {/* Always show hierarchy fields as Role is implicitly Vendeur */}
-                                    <Input
-                                        label={formType === 'Energie' ? "Manager" : "Nom du Manager"}
-                                        name="direct_manager_name"
-                                        required
-                                        value={formData.direct_manager_name}
-                                        onChange={handleInputChange}
-                                    />
+                                    {/* Contract Type Selection (Energie Only) */}
+                                    {formType === 'Energie' && (
+                                        <div className="mb-6 group">
+                                            <label className="block text-sm font-semibold text-stratygo-dark mb-2 ml-1 transition-colors group-hover:text-stratygo-dark">
+                                                Type de contrat <span className="text-stratygo-dark">*</span>
+                                            </label>
+                                            <div className="relative">
+                                                <select
+                                                    name="contract_type"
+                                                    value={formData.contract_type}
+                                                    onChange={handleInputChange}
+                                                    required
+                                                    className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-stratygo-dark/10 focus:border-stratygo-dark focus:bg-white transition-all duration-300 shadow-sm appearance-none cursor-pointer"
+                                                >
+                                                    <option value="">Sélectionnez votre type de contrat</option>
+                                                    <option value="VRP">VRP</option>
+                                                    <option value="VDI">VDI</option>
+                                                    <option value="CDI/CDD">CDI/CDD</option>
+                                                    <option value="Auto-entrepreneur">Auto-entrepreneur</option>
+                                                </select>
+                                                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
+                                                    <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" fillRule="evenodd"></path></svg>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
 
-                                    {formType !== 'Energie' && (
+                                    {/* Hierarchy Fields */}
+                                    {/* Manager Name: Show if Energie OR (Fibre and Role is Vendeur) */}
+                                    {(formType === 'Energie' || (formType === 'Fibre' && formData.role === 'Vendeur')) && (
+                                        <Input
+                                            label={formType === 'Energie' ? "Manager" : "Nom du Manager"}
+                                            name="direct_manager_name"
+                                            required
+                                            value={formData.direct_manager_name}
+                                            onChange={handleInputChange}
+                                        />
+                                    )}
+
+                                    {/* Director and Animator: Show for Fibre (conditionally) */}
+                                    {formType === 'Fibre' && (
                                         <>
-                                            <Input label="Nom du Directeur" name="director_name" required value={formData.director_name} onChange={handleInputChange} />
-                                            <Input label="Nom de l'Animateur Réseau" name="network_animator_name" required value={formData.network_animator_name} onChange={handleInputChange} />
+                                            {/* Director: Show if Role is NOT Directeur */}
+                                            {formData.role !== 'Directeur' && (
+                                                <Input label="Nom du Directeur" name="director_name" required value={formData.director_name} onChange={handleInputChange} />
+                                            )}
+                                            {/* Animator: Show if Role is Vendeur */}
+                                            {formData.role === 'Vendeur' && (
+                                                <Input label="Nom de l'Animateur Réseau" name="network_animator_name" required value={formData.network_animator_name} onChange={handleInputChange} />
+                                            )}
                                         </>
                                     )}
 
