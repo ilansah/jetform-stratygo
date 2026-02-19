@@ -190,6 +190,9 @@ app.post('/api/submissions', upload.fields([
         } catch (err) {
             console.error('❌ Database Insertion Error:', err);
             console.error('Query Values:', values);
+            const fs = require('fs');
+            const logMessage = `[${new Date().toISOString()}] Error: ${err.message}\nStack: ${err.stack}\nValues: ${JSON.stringify(values)}\n\n`;
+            fs.appendFileSync('server_error.log', logMessage);
             res.status(500).json({ error: 'Internal Server Error', details: err.message, sqlMessage: err.sqlMessage });
         }
     } catch (error) {
