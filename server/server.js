@@ -70,8 +70,10 @@ app.get('/api/debug/files', (req, res) => {
                         name: file,
                         size: stats.size,
                         created: stats.birthtime,
-                        modified: stats.mtime
+                        modified: stats.mtime,
+                        permissions: (stats.mode & 0o777).toString(8) // Add permissions
                     };
+
                 });
             } catch (e) {
                 error = e.message;
@@ -96,11 +98,33 @@ app.get('/api/debug/files', (req, res) => {
 // --- DEBUGGING END ---
 
 // Serve uploaded files statically
-app.use('/uploads', express.static(uploadsPath)); // Use resolved path
-// Fix: If file not found in uploads, return 404 instead of falling through to React index.html
-app.use('/uploads', (req, res) => {
-    console.error(`❌ 404 Not Found for /uploads request: ${req.url}`);
-    res.status(404).send('File not found');
+// Serve uploaded files MANUALLY to debug permissions/resolving
+app.get('/uploads/:filename', (req, res) => {
+    const filename = req.params.filename;
+    // Prevent directory traversal
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+        return res.status(403).send('Invalid filename');
+    }
+
+    const filepath = path.join(uploadsPath, filename);
+    console.log(`📂 Request for file: ${filepath}`);
+
+    if (fs.existsSync(filepath)) {
+        console.log('✅ File found, attempting to send...');
+        res.sendFile(filepath, (err) => {
+            if (err) {
+                console.error('❌ Error sending file:', err);
+                if (!res.headersSent) {
+                    res.status(500).send(`Error sending file: ${err.message}`);
+                }
+            } else {
+                console.log('✅ File sent successfully');
+            }
+        });
+    } else {
+        console.error('❌ File NOT found at path:', filepath);
+        res.status(404).send('File not found');
+    }
 });
 // Serve client public files (for PDF and other static assets)
 app.use('/documents', express.static(path.join(__dirname, '../client/public/documents')));
