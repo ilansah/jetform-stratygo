@@ -333,13 +333,16 @@ const AdminDashboard = () => {
 
     const openPreview = (filename) => {
         const type = getFileType(filename);
-        setPreviewFile({ url: `/uploads/${filename}`, type, filename });
+        // Construct full URL relative to where the app is served fro m
+        const fullUrl = `${window.location.origin}/uploads/${filename}`;
+        console.log('Opening preview for:', fullUrl);
+        setPreviewFile({ url: fullUrl, type, filename });
         setShowPreview(true);
     };
 
     const downloadFile = (filename) => {
         const link = document.createElement('a');
-        link.href = `/uploads/${filename}`;
+        link.href = `${window.location.origin}/uploads/${filename}`;
         link.download = filename;
         document.body.appendChild(link);
         link.click();

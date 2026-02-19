@@ -330,8 +330,25 @@ app.get('/api/submissions', async (req, res) => {
         // Get paginated data (Running query with params + limit/offset)
         const [rows] = await pool.query(dataQuery, [...queryParams, limit, offset]);
 
+        // Helper to sanitize paths (fix Windows backslashes and absolute paths)
+        const sanitizePath = (p) => {
+            if (!p) return null;
+            // Get just the filename (handle both / and \ separators)
+            return p.split(/[/\\]/).pop();
+        };
+
+        const sanitizedRows = rows.map(row => ({
+            ...row,
+            id_card_front_path: sanitizePath(row.id_card_front_path),
+            id_card_back_path: sanitizePath(row.id_card_back_path),
+            photo_path: sanitizePath(row.photo_path),
+            signature_path: sanitizePath(row.signature_path),
+            signed_pdf_path: sanitizePath(row.signed_pdf_path),
+            signed_charte_path: sanitizePath(row.signed_charte_path)
+        }));
+
         res.json({
-            data: rows,
+            data: sanitizedRows,
             pagination: {
                 total,
                 page,
@@ -718,12 +735,19 @@ app.post('/api/submissions/import', importUpload.single('file'), async (req, res
                     hr_email = 'accredgovad@ikmail.com';
                 }
 
-                const id_card_front_path = getValue(row, 'id_card_front_path');
-                const id_card_back_path = getValue(row, 'id_card_back_path');
-                const photo_path = getValue(row, 'photo_path');
-                const signature_path = getValue(row, 'signature_path');
-                const signed_pdf_path = getValue(row, 'signed_pdf_path');
-                const signed_charte_path = getValue(row, 'signed_charte_path');
+                // Sanitize paths from import (fix Windows backslashes and absolute paths)
+                const sanitizeImportPath = (p) => {
+                    if (!p) return null;
+                    // Get just the filename (handle both / and \ separators)
+                    return p.split(/[/\\]/).pop();
+                };
+
+                const id_card_front_path = sanitizeImportPath(getValue(row, 'id_card_front_path'));
+                const id_card_back_path = sanitizeImportPath(getValue(row, 'id_card_back_path'));
+                const photo_path = sanitizeImportPath(getValue(row, 'photo_path'));
+                const signature_path = sanitizeImportPath(getValue(row, 'signature_path'));
+                const signed_pdf_path = sanitizeImportPath(getValue(row, 'signed_pdf_path'));
+                const signed_charte_path = sanitizeImportPath(getValue(row, 'signed_charte_path'));
 
                 // Insert into Query
                 const query = `
