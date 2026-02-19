@@ -8,6 +8,9 @@ const XLSX = require('xlsx');
 const envPath = path.join(__dirname, '../.env');
 const dotenvResult = require('dotenv').config({ path: envPath });
 
+const app = express();
+const PORT = process.env.PORT || 3000;
+
 // In-memory log storage
 let lastServerError = null;
 let lastRequestLog = null;
@@ -32,10 +35,6 @@ if (dotenvResult.error) console.error(dotenvResult.error);
 console.log('👉 DB_USER from env:', process.env.DB_USER);
 console.log('👉 DB_HOST from env:', process.env.DB_HOST);
 console.log('👉 DB_NAME from env:', process.env.DB_NAME);
-
-
-const app = express();
-const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
