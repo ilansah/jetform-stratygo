@@ -1,19 +1,33 @@
 const { Resend } = require('resend');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const EMAIL_FROM = 'Service Accréditation <adv@stratygo.fr>';
+
+function getResendClient() {
+    const key = process.env.RESEND_API_KEY;
+    if (!key || !key.startsWith('re_')) {
+        console.warn('⚠️ RESEND_API_KEY is missing or invalid. Email sending will be disabled.');
+        return null;
+    }
+    return new Resend(key);
+}
 
 /**
  * Sends an approval email to the user.
  * @param {string} to - Recipient email
  * @param {string} name - User's full name
  */
-async function sendApprovalEmail(to, name) {
+async function sendApprovalEmail(to, name, cc = []) {
     try {
+        const resend = getResendClient();
+        if (!resend) return { success: false, error: 'Missing API Key' };
+
+        // Filter out empty CCs
+        const validCC = Array.isArray(cc) ? cc.filter(email => email && email.trim() !== '') : [];
+
         const { data, error } = await resend.emails.send({
             from: EMAIL_FROM,
             to: [to],
+            cc: validCC,
             subject: 'Accréditation Approuvée - Stratygo',
             html: `
                 <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
@@ -54,11 +68,18 @@ async function sendApprovalEmail(to, name) {
  * @param {string} name - User's full name
  * @param {string} reason - Reason for refusal
  */
-async function sendRefusalEmail(to, name, reason) {
+async function sendRefusalEmail(to, name, reason, cc = []) {
     try {
+        const resend = getResendClient();
+        if (!resend) return { success: false, error: 'Missing API Key' };
+
+        // Filter out empty CCs
+        const validCC = Array.isArray(cc) ? cc.filter(email => email && email.trim() !== '') : [];
+
         const { data, error } = await resend.emails.send({
             from: EMAIL_FROM,
             to: [to],
+            cc: validCC,
             subject: 'Mise à jour concernant votre accréditation - Stratygo',
             html: `
                 <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
