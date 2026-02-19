@@ -101,11 +101,11 @@ const upload = multer({
             cb(null, true);
         }
         // Allow Images for signature and photo (if the user uploads an image for photo)
-        else if ((file.fieldname === 'signature' || file.fieldname === 'photo') && (file.mimetype === 'image/png' || file.mimetype === 'image/jpeg' || file.mimetype === 'image/jpg')) {
+        else if ((file.fieldname === 'signature' || file.fieldname === 'photo' || file.fieldname === 'id_card_front' || file.fieldname === 'id_card_back') && (file.mimetype === 'image/png' || file.mimetype === 'image/jpeg' || file.mimetype === 'image/jpg')) {
             cb(null, true);
         }
         else {
-            cb(new Error(`Le fichier ${file.fieldname} doit être un PDF (ou une image pour la signature/photo) !`), false);
+            cb(new Error(`Le fichier ${file.fieldname} doit être un PDF (ou une image pour signature/photo/CNI) !`), false);
         }
     }
 });

@@ -397,9 +397,9 @@ const PublicForm = () => {
                                         <AlertCircle className="text-yellow-600 mr-3 mt-0.5 flex-shrink-0" size={18} />
                                         <p className="text-sm text-yellow-800">Assurez-vous que les photos sont nettes et lisibles. La photo d'identité doit être sur fond blanc uni.</p>
                                     </div>
-                                    <FileDropzone label="Pièce d'identité (Recto)" name="id_card_front" required onFileChange={handleFileChange} acceptedFileTypes="application/pdf" />
-                                    <FileDropzone label="Pièce d'identité (Verso)" name="id_card_back" required onFileChange={handleFileChange} acceptedFileTypes="application/pdf" />
-                                    <FileDropzone label="Photo d'identité (Fond blanc uniquement)" name="photo" required onFileChange={handleFileChange} acceptedFileTypes="application/pdf" />
+                                    <FileDropzone label="Pièce d'identité (Recto)" name="id_card_front" required onFileChange={handleFileChange} acceptedFileTypes="image/*, application/pdf" />
+                                    <FileDropzone label="Pièce d'identité (Verso)" name="id_card_back" required onFileChange={handleFileChange} acceptedFileTypes="image/*, application/pdf" />
+                                    <FileDropzone label="Photo d'identité (Fond blanc uniquement)" name="photo" required onFileChange={handleFileChange} acceptedFileTypes="image/*, application/pdf" />
                                 </div>
                             </section>
 
