@@ -114,4 +114,62 @@ async function sendRefusalEmail(to, name, reason, cc = []) {
     }
 }
 
-module.exports = { sendApprovalEmail, sendRefusalEmail };
+/**
+ * Sends a submission confirmation email to the vendor.
+ * @param {string} to - Vendor email
+ * @param {string} name - Vendor full name
+ * @param {string} managerEmail - Manager email (CC)
+ * @param {string} hrEmail - HR email (CC)
+ * @param {string} type - 'Fibre' or 'Energie'
+ */
+async function sendSubmissionEmail(to, name, managerEmail, hrEmail, type = 'Fibre') {
+    try {
+        const resend = getResendClient();
+        if (!resend) return { success: false, error: 'Missing API Key' };
+
+        // Build CC list: manager and/or HR if provided
+        const ccList = [managerEmail, hrEmail].filter(email => email && email.trim() !== '');
+
+        const typeColor = type === 'Energie' ? '#16a34a' : '#2563eb';
+        const typeLabel = type === 'Energie' ? 'Energie' : 'Fibre';
+
+        const { data, error } = await resend.emails.send({
+            from: EMAIL_FROM,
+            to: [to],
+            cc: ccList,
+            subject: `Demande d'accréditation ${typeLabel} reçue - Stratygo`,
+            html: `
+                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h2 style="color: ${typeColor}; margin: 0;">Demande d'accréditation reçue</h2>
+                        <p style="color: #666; font-size: 14px; margin-top: 8px;">Domaine : <strong>${typeLabel}</strong></p>
+                    </div>
+                    <p>Bonjour <strong>${name}</strong>,</p>
+                    <p>Nous avons bien reçu votre demande d'accréditation <strong>${typeLabel}</strong>. Elle est actuellement en cours d'examen par notre équipe.</p>
+                    <div style="margin: 30px 0; padding: 15px; background-color: #f8fafc; border-left: 4px solid ${typeColor}; border-radius: 4px;">
+                        <p style="margin: 0; font-weight: bold; color: #1e3a5f;">Statut actuel : En cours de traitement</p>
+                        <p style="margin: 8px 0 0; font-size: 13px; color: #555;">Vous recevrez un email dès que votre dossier aura été examiné.</p>
+                    </div>
+                    <p>Si vous avez des questions, n'hésitez pas à contacter votre manager ou le service RH.</p>
+                    <p style="margin-top: 30px; font-size: 12px; color: #666; text-align: center;">
+                        Ceci est un message automatique, merci de ne pas y répondre directement.<br>
+                        © ${new Date().getFullYear()} Stratygo. Tous droits réservés.
+                    </p>
+                </div>
+            `
+        });
+
+        if (error) {
+            console.error('Resend Error (Submission):', error);
+            return { success: false, error };
+        }
+
+        console.log('Submission confirmation email sent:', data);
+        return { success: true, data };
+    } catch (err) {
+        console.error('Email Service Error (Submission):', err);
+        return { success: false, error: err };
+    }
+}
+
+module.exports = { sendApprovalEmail, sendRefusalEmail, sendSubmissionEmail };

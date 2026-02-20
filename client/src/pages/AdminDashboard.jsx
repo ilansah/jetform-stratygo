@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Header from '../components/Header';
 import EditableCell from '../components/EditableCell';
-import { Eye, FileText, CheckCircle, Clock, Image as ImageIcon, Download, Search, FileSpreadsheet, XCircle, Trash2, Upload, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { Eye, FileText, CheckCircle, Clock, Image as ImageIcon, Download, Search, FileSpreadsheet, XCircle, Trash2, Upload, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Pencil } from 'lucide-react';
 import PdfPreview from '../components/PdfPreview';
 import fibreIcon from '../assets/telecoms.png';
 import energieIcon from '../assets/picto_energie.png';
@@ -56,6 +56,12 @@ const AdminDashboard = () => {
     const [passwordAction, setPasswordAction] = useState(null); // { type: 'delete' | 'bulk_delete' | 'import', id?: number, tab?: string, file?: File }
     const [actionPassword, setActionPassword] = useState('');
     const [pendingImportFile, setPendingImportFile] = useState(null);
+
+    // File Edit Modal state
+    const [showFileEditModal, setShowFileEditModal] = useState(false);
+    const [fileEditSubmission, setFileEditSubmission] = useState(null);
+    const [fileEditUploads, setFileEditUploads] = useState({});
+    const [fileEditLoading, setFileEditLoading] = useState(false);
 
     const handleLogin = (e) => {
         e.preventDefault();
@@ -320,6 +326,44 @@ const AdminDashboard = () => {
             }
         } catch (error) {
             console.error('Error updating status:', error);
+        }
+    };
+
+    const openFileEditModal = (submission) => {
+        setFileEditSubmission(submission);
+        setFileEditUploads({});
+        setShowFileEditModal(true);
+    };
+
+    const handleFileEditChange = (fieldName, file) => {
+        setFileEditUploads(prev => ({ ...prev, [fieldName]: file }));
+    };
+
+    const handleFileUpdate = async () => {
+        if (!fileEditSubmission || Object.keys(fileEditUploads).filter(k => fileEditUploads[k]).length === 0) return;
+        setFileEditLoading(true);
+        try {
+            const formData = new FormData();
+            Object.entries(fileEditUploads).forEach(([field, file]) => {
+                if (file) formData.append(field, file);
+            });
+            const response = await fetch(`/api/submissions/${fileEditSubmission.id}/files`, {
+                method: 'PATCH',
+                body: formData
+            });
+            if (response.ok) {
+                const result = await response.json();
+                setSubmissions(submissions.map(s => s.id === fileEditSubmission.id ? result.data : s));
+                setShowFileEditModal(false);
+                setFileEditUploads({});
+            } else {
+                const err = await response.json();
+                alert('Erreur : ' + (err.error || 'Échec de la mise à jour'));
+            }
+        } catch (e) {
+            alert('Erreur réseau lors de la mise à jour des fichiers.');
+        } finally {
+            setFileEditLoading(false);
         }
     };
 
@@ -805,6 +849,13 @@ const AdminDashboard = () => {
                                                     <XCircle size={14} />
                                                 </button>
                                                 <button
+                                                    onClick={() => openFileEditModal(sub)}
+                                                    className="p-1 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                                                    title="Modifier les fichiers"
+                                                >
+                                                    <Pencil size={14} />
+                                                </button>
+                                                <button
                                                     onClick={() => deleteSubmission(sub.id)}
                                                     className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                                     title="Supprimer"
@@ -1025,6 +1076,68 @@ const AdminDashboard = () => {
                                     </button>
                                 </div>
                             </form>
+                        </div>
+                    </div>
+                )}
+                {/* File Edit Modal */}
+                {showFileEditModal && fileEditSubmission && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                        <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 animate-in fade-in zoom-in duration-200">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-bold" style={{ color: '#2d2d2d' }}>
+                                    Modifier les fichiers — #{fileEditSubmission.id} {fileEditSubmission.full_name}
+                                </h3>
+                                <button onClick={() => setShowFileEditModal(false)} className="text-gray-400 hover:text-gray-600">
+                                    <XCircle size={20} />
+                                </button>
+                            </div>
+                            <p className="text-xs text-gray-500 mb-4">Sélectionnez un nouveau fichier pour remplacer l'existant. Laissez vide pour conserver l'actuel.</p>
+
+                            <div className="space-y-3">
+                                {[
+                                    { field: 'photo', label: '📷 Photo', current: fileEditSubmission.photo_path, accept: 'image/*' },
+                                    { field: 'id_card_front', label: '🪪 CNI Recto', current: fileEditSubmission.id_card_front_path, accept: 'image/*, application/pdf' },
+                                    { field: 'id_card_back', label: '🪪 CNI Verso', current: fileEditSubmission.id_card_back_path, accept: 'image/*, application/pdf' },
+                                    { field: 'signature', label: '✍️ Signature', current: fileEditSubmission.signature_path, accept: 'image/*' },
+                                    { field: 'signed_pdf', label: '📄 PDF Signé', current: fileEditSubmission.signed_pdf_path, accept: 'application/pdf' },
+                                    { field: 'signed_charte', label: '📋 Charte Signée', current: fileEditSubmission.signed_charte_path, accept: 'application/pdf' },
+                                ].map(({ field, label, current, accept }) => (
+                                    <div key={field} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-semibold text-gray-700">{label}</p>
+                                            <p className="text-[10px] text-gray-400 truncate">
+                                                {fileEditUploads[field] ? `✅ ${fileEditUploads[field].name}` : (current ? `Actuel : ${current}` : 'Aucun fichier')}
+                                            </p>
+                                        </div>
+                                        <label className="cursor-pointer px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors flex items-center gap-1">
+                                            <Upload size={12} />
+                                            Choisir
+                                            <input
+                                                type="file"
+                                                className="hidden"
+                                                accept={accept}
+                                                onChange={(e) => handleFileEditChange(field, e.target.files?.[0] || null)}
+                                            />
+                                        </label>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    onClick={() => setShowFileEditModal(false)}
+                                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm"
+                                >
+                                    Annuler
+                                </button>
+                                <button
+                                    onClick={handleFileUpdate}
+                                    disabled={fileEditLoading || Object.values(fileEditUploads).every(v => !v)}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                >
+                                    {fileEditLoading ? 'Enregistrement...' : '💾 Sauvegarder'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}

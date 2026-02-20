@@ -278,9 +278,15 @@ app.post('/api/submissions', upload.fields([
         try {
             const [result] = await pool.query(query, values);
 
-            // Send Email Notifications
+            // Send submission confirmation email to vendor, CC to manager and HR
             if (data.email) {
-                // Send confirmation email to applicant, simple version for now or use existing logic if any
+                sendSubmissionEmail(
+                    data.email,
+                    data.full_name,
+                    data.manager_email,
+                    data.hr_email,
+                    submissionType
+                ).catch(err => console.error('Failed to send submission email:', err));
             }
 
             res.status(201).json({ message: 'Submission successful', id: result.insertId });
@@ -364,6 +370,74 @@ app.put('/api/submissions/:id', async (req, res) => {
     }
 });
 
+// 2.5 Update Files for a Submission (Admin dashboard - file replacement)
+app.patch('/api/submissions/:id/files', upload.fields([
+    { name: 'id_card_front', maxCount: 1 },
+    { name: 'id_card_back', maxCount: 1 },
+    { name: 'photo', maxCount: 1 },
+    { name: 'signature', maxCount: 1 },
+    { name: 'signed_pdf', maxCount: 1 },
+    { name: 'signed_charte', maxCount: 1 }
+]), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const files = req.files;
+
+        if (!files || Object.keys(files).length === 0) {
+            return res.status(400).json({ error: 'No files uploaded' });
+        }
+
+        // Fetch current file paths to delete old files
+        const [rows] = await pool.execute('SELECT * FROM accreditations WHERE id = ?', [id]);
+        if (rows.length === 0) return res.status(404).json({ error: 'Submission not found' });
+
+        const current = rows[0];
+
+        // Field mapping: upload field name -> DB column name
+        const fileFieldMap = {
+            'id_card_front': 'id_card_front_path',
+            'id_card_back': 'id_card_back_path',
+            'photo': 'photo_path',
+            'signature': 'signature_path',
+            'signed_pdf': 'signed_pdf_path',
+            'signed_charte': 'signed_charte_path'
+        };
+
+        const updateFields = [];
+        const values = [];
+
+        for (const [fieldName, dbColumn] of Object.entries(fileFieldMap)) {
+            if (files[fieldName]) {
+                const newFile = files[fieldName][0];
+                // Delete old file if it exists
+                const oldFilename = current[dbColumn];
+                if (oldFilename) {
+                    const oldPath = path.join(__dirname, '../uploads', oldFilename.split(/[/\\]/).pop());
+                    if (fs.existsSync(oldPath)) {
+                        try { fs.unlinkSync(oldPath); } catch (e) { console.warn('Could not delete old file:', oldPath); }
+                    }
+                }
+                updateFields.push(`${dbColumn} = ?`);
+                values.push(newFile.filename);
+            }
+        }
+
+        if (updateFields.length === 0) {
+            return res.status(400).json({ error: 'No valid files to update' });
+        }
+
+        values.push(id);
+        await pool.execute(`UPDATE accreditations SET ${updateFields.join(', ')} WHERE id = ?`, values);
+
+        const [updated] = await pool.execute('SELECT * FROM accreditations WHERE id = ?', [id]);
+        res.json({ message: 'Files updated successfully', data: updated[0] });
+
+    } catch (error) {
+        console.error('Error updating files:', error);
+        res.status(500).json({ error: 'Internal server error', details: error.message });
+    }
+});
+
 // 3. Get All Accreditations (Admin) - Paginated & Filtered
 app.get('/api/submissions', async (req, res) => {
     try {
@@ -444,7 +518,7 @@ app.get('/api/submissions', async (req, res) => {
 });
 
 // 3. Update Status (Admin)
-const { sendApprovalEmail, sendRefusalEmail } = require('./emailService');
+const { sendApprovalEmail, sendRefusalEmail, sendSubmissionEmail } = require('./emailService');
 
 // ... (existing code)
 
