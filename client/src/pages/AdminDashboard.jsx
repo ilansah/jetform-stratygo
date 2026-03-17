@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Header from '../components/Header';
 import EditableCell from '../components/EditableCell';
-import { Eye, FileText, CheckCircle, Clock, Image as ImageIcon, Download, Search, FileSpreadsheet, XCircle, Trash2, Upload, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Pencil } from 'lucide-react';
+import { Eye, FileText, CheckCircle, Clock, Image as ImageIcon, Download, Search, FileSpreadsheet, XCircle, Trash2, Upload, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Pencil, Medal } from 'lucide-react';
 import PdfPreview from '../components/PdfPreview';
 import fibreIcon from '../assets/telecoms.png';
 import energieIcon from '../assets/picto_energie.png';
@@ -156,6 +156,12 @@ const AdminDashboard = () => {
     const exportToExcel = () => {
         window.open('/api/submissions/export/excel', '_blank');
     };
+
+    // Scroll sync refs for top scrollbar
+    const tableRef = React.useRef(null);
+    const topScrollRef = React.useRef(null);
+    const handleTopScroll = () => { if (tableRef.current && topScrollRef.current) tableRef.current.scrollLeft = topScrollRef.current.scrollLeft; };
+    const handleTableScroll = () => { if (tableRef.current && topScrollRef.current) topScrollRef.current.scrollLeft = tableRef.current.scrollLeft; };
 
     // Import functionality
     const fileInputRef = React.useRef(null);
@@ -578,33 +584,43 @@ const AdminDashboard = () => {
 
                 {/* Table Section */}
                 <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
+                    {/* Top scrollbar — synchronized with table */}
+                    <div
+                        ref={topScrollRef}
+                        onScroll={handleTopScroll}
+                        className="overflow-x-auto border-b border-gray-100"
+                        style={{ height: '14px' }}
+                    >
+                        <div style={{ width: '2600px', height: '1px' }} />
+                    </div>
+                    <div className="overflow-x-auto" ref={tableRef} onScroll={handleTableScroll}>
+                        <table className="w-full text-xs" style={{ minWidth: '2600px' }}>
                             <thead>
                                 <tr className="border-b border-gray-200" style={{ background: 'linear-gradient(to bottom, #f9fafb, #ffffff)' }}>
-                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider w-10">ID</th>
-                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider w-24">Statut</th>
-                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider w-20">Date</th>
-                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider w-16">Photo</th>
-                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider max-w-[120px]">Nom</th>
-                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider max-w-[100px]">Tél</th>
-                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider max-w-[120px]">Email</th>
-                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider max-w-[80px]">Rôle</th>
-                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider max-w-[80px]">Contrat</th>
-                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider max-w-[80px]">Ville</th>
-                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider max-w-[80px]">Manager</th>
-                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider max-w-[80px]">Directeur</th>
-                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider max-w-[80px]">Anim.</th>
-                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider w-20">Début</th>
-                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider w-16">Eq.</th>
+                                    <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'50px'}}>ID</th>
+                                    <th className="px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'70px'}} title="Badge">🏅 Badge</th>
+                                    <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'130px'}}>Statut</th>
+                                    <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'95px'}}>Date</th>
+                                    <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'60px'}}>Photo</th>
+                                    <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'180px'}}>Nom Complet</th>
+                                    <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'140px'}}>Téléphone</th>
+                                    <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'240px'}}>Email</th>
+                                    <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'140px'}}>Rôle</th>
+                                    <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'140px'}}>Contrat</th>
+                                    <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'150px'}}>Ville Agence</th>
+                                    <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'180px'}}>Manager Direct</th>
+                                    <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'180px'}}>Directeur</th>
+                                    <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'180px'}}>Animateur</th>
+                                    <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'105px'}}>Date Début</th>
+                                    <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'90px'}}>Équipe</th>
                                     {activeTab === 'Fibre' && (
-                                        <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider w-16">Test</th>
+                                        <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'90px'}}>Test Fibre</th>
                                     )}
-                                    <th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wider w-24">Docs</th>
-                                    <th className="px-2 py-2 text-center text-[10px] font-bold uppercase tracking-wider w-16">Act.</th>
+                                    <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'140px'}}>Documents</th>
+                                    <th className="px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'100px'}}>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100 text-xs">
+                            <tbody className="divide-y divide-gray-100">
                                 {filteredSubmissions.map((sub, index) => (
                                     <tr
                                         key={sub.id}
@@ -612,18 +628,33 @@ const AdminDashboard = () => {
                                         style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#fafafa' }}
                                     >
                                         {/* ID */}
-                                        <td className="px-2 py-1 whitespace-nowrap">
+                                        <td className="px-3 py-2 whitespace-nowrap">
                                             <span className="font-mono font-semibold text-gray-600">
                                                 #{sub.id}
                                             </span>
                                         </td>
 
+                                        {/* Badge */}
+                                        <td className="px-3 py-2 whitespace-nowrap text-center">
+                                            <button
+                                                onClick={() => updateField(sub.id, 'badge', !sub.badge)}
+                                                className={`w-7 h-7 rounded-full flex items-center justify-center mx-auto transition-all ${
+                                                    sub.badge
+                                                        ? 'bg-amber-400 text-white shadow-sm hover:bg-amber-500'
+                                                        : 'bg-gray-100 text-gray-300 hover:bg-amber-100 hover:text-amber-400'
+                                                }`}
+                                                title={sub.badge ? 'Badge attribué — cliquer pour retirer' : 'Pas de badge — cliquer pour attribuer'}
+                                            >
+                                                <Medal size={14} />
+                                            </button>
+                                        </td>
+
                                         {/* Status */}
-                                        <td className="px-2 py-1 whitespace-nowrap">
+                                        <td className="px-3 py-2 whitespace-nowrap">
                                             <select
                                                 value={sub.status}
                                                 onChange={(e) => handleStatusChange(sub.id, e.target.value)}
-                                                className={`px-2 py-0.5 rounded text-[10px] font-bold border ${sub.status === 'Approuvé'
+                                                className={`px-2 py-1 rounded text-[10px] font-bold border ${sub.status === 'Approuvé'
                                                     ? 'bg-green-50 text-green-700 border-green-200'
                                                     : sub.status === 'Refusé'
                                                         ? 'bg-red-50 text-red-700 border-red-200'
@@ -637,16 +668,16 @@ const AdminDashboard = () => {
                                         </td>
 
                                         {/* Date */}
-                                        <td className="px-2 py-1 whitespace-nowrap text-gray-500">
+                                        <td className="px-3 py-2 whitespace-nowrap text-gray-500">
                                             {formatDate(sub.created_at)}
                                         </td>
 
                                         {/* Photo */}
-                                        <td className="px-2 py-1 whitespace-nowrap">
+                                        <td className="px-3 py-2 whitespace-nowrap">
                                             {sub.photo_path ? (
                                                 <button
                                                     onClick={() => openPreview(sub.photo_path)}
-                                                    className="w-8 h-8 rounded-full overflow-hidden border border-gray-200 hover:border-blue-500 transition-colors flex items-center justify-center bg-gray-50"
+                                                    className="w-9 h-9 rounded-full overflow-hidden border border-gray-200 hover:border-blue-500 transition-colors flex items-center justify-center bg-gray-50"
                                                 >
                                                     {sub.photo_path.toLowerCase().endsWith('.pdf') ? (
                                                         <FileText size={14} className="text-red-500" />
@@ -659,175 +690,107 @@ const AdminDashboard = () => {
                                                     )}
                                                 </button>
                                             ) : (
-                                                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                                                <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
                                                     <ImageIcon size={14} className="text-gray-400" />
                                                 </div>
                                             )}
                                         </td>
 
                                         {/* Nom Complet */}
-                                        <td className="px-2 py-1 max-w-[120px] truncate" title={sub.full_name}>
-                                            <EditableCell
-                                                value={sub.full_name}
-                                                onSave={(value) => updateField(sub.id, 'full_name', value)}
-                                                type="text"
-                                            />
+                                        <td className="px-3 py-2 whitespace-nowrap" style={{minWidth:'180px'}}>
+                                            <EditableCell value={sub.full_name} onSave={(v) => updateField(sub.id, 'full_name', v)} type="text" />
                                         </td>
 
                                         {/* Téléphone */}
-                                        <td className="px-2 py-1 max-w-[100px] truncate" title={sub.phone}>
-                                            <EditableCell
-                                                value={sub.phone}
-                                                onSave={(value) => updateField(sub.id, 'phone', value)}
-                                                type="tel"
-                                            />
+                                        <td className="px-3 py-2 whitespace-nowrap" style={{minWidth:'140px'}}>
+                                            <EditableCell value={sub.phone} onSave={(v) => updateField(sub.id, 'phone', v)} type="tel" />
                                         </td>
 
                                         {/* Email */}
-                                        <td className="px-2 py-1 max-w-[120px] truncate" title={sub.email}>
-                                            <EditableCell
-                                                value={sub.email}
-                                                onSave={(value) => updateField(sub.id, 'email', value)}
-                                                type="email"
-                                            />
+                                        <td className="px-3 py-2 whitespace-nowrap" style={{minWidth:'240px'}}>
+                                            <EditableCell value={sub.email} onSave={(v) => updateField(sub.id, 'email', v)} type="email" />
                                         </td>
 
                                         {/* Rôle */}
-                                        <td className="px-2 py-1 max-w-[80px] truncate" title={sub.role}>
-                                            <EditableCell
-                                                value={sub.role}
-                                                onSave={(value) => updateField(sub.id, 'role', value)}
-                                                type="select"
-                                                options={['Vendeur', 'Manager', 'Directeur', 'Animateur Réseau']}
-                                            />
+                                        <td className="px-3 py-2 whitespace-nowrap" style={{minWidth:'140px'}}>
+                                            <EditableCell value={sub.role} onSave={(v) => updateField(sub.id, 'role', v)} type="select" options={['Vendeur', 'Manager', 'Directeur', 'Animateur Réseau']} />
                                         </td>
 
                                         {/* Type Contrat */}
-                                        <td className="px-2 py-1 max-w-[80px] truncate" title={sub.contract_type}>
-                                            <EditableCell
-                                                value={sub.contract_type || '-'}
-                                                onSave={(value) => updateField(sub.id, 'contract_type', value)}
-                                                type="select"
-                                                options={['VRP', 'VDI', 'CDI/CDD', 'Auto-entrepreneur']}
-                                            />
+                                        <td className="px-3 py-2 whitespace-nowrap" style={{minWidth:'140px'}}>
+                                            <EditableCell value={sub.contract_type || '-'} onSave={(v) => updateField(sub.id, 'contract_type', v)} type="select" options={['VRP', 'VDI', 'CDI/CDD', 'Auto-entrepreneur']} />
                                         </td>
 
                                         {/* Ville Agence */}
-                                        <td className="px-2 py-1 max-w-[80px] truncate" title={sub.agency_city}>
-                                            <EditableCell
-                                                value={sub.agency_city}
-                                                onSave={(value) => updateField(sub.id, 'agency_city', value)}
-                                                type="text"
-                                            />
+                                        <td className="px-3 py-2 whitespace-nowrap" style={{minWidth:'150px'}}>
+                                            <EditableCell value={sub.agency_city} onSave={(v) => updateField(sub.id, 'agency_city', v)} type="text" />
                                         </td>
 
                                         {/* Manager Direct */}
-                                        <td className="px-2 py-1 max-w-[80px] truncate" title={sub.direct_manager_name}>
-                                            <EditableCell
-                                                value={sub.direct_manager_name || '-'}
-                                                onSave={(value) => updateField(sub.id, 'direct_manager_name', value)}
-                                                type="text"
-                                            />
+                                        <td className="px-3 py-2 whitespace-nowrap" style={{minWidth:'180px'}}>
+                                            <EditableCell value={sub.direct_manager_name || '-'} onSave={(v) => updateField(sub.id, 'direct_manager_name', v)} type="text" />
                                         </td>
 
                                         {/* Directeur */}
-                                        <td className="px-2 py-1 max-w-[80px] truncate" title={sub.director_name}>
-                                            <EditableCell
-                                                value={sub.director_name || '-'}
-                                                onSave={(value) => updateField(sub.id, 'director_name', value)}
-                                                type="text"
-                                            />
+                                        <td className="px-3 py-2 whitespace-nowrap" style={{minWidth:'180px'}}>
+                                            <EditableCell value={sub.director_name || '-'} onSave={(v) => updateField(sub.id, 'director_name', v)} type="text" />
                                         </td>
 
                                         {/* Animateur Réseau */}
-                                        <td className="px-2 py-1 max-w-[80px] truncate" title={sub.network_animator_name}>
-                                            <EditableCell
-                                                value={sub.network_animator_name || '-'}
-                                                onSave={(value) => updateField(sub.id, 'network_animator_name', value)}
-                                                type="text"
-                                            />
+                                        <td className="px-3 py-2 whitespace-nowrap" style={{minWidth:'180px'}}>
+                                            <EditableCell value={sub.network_animator_name || '-'} onSave={(v) => updateField(sub.id, 'network_animator_name', v)} type="text" />
                                         </td>
 
                                         {/* Date Début */}
-                                        <td className="px-2 py-1 w-20 truncate">
-                                            <EditableCell
-                                                value={sub.start_date ? sub.start_date.split('T')[0] : ''}
-                                                onSave={(value) => updateField(sub.id, 'start_date', value)}
-                                                type="date"
-                                            />
+                                        <td className="px-3 py-2 whitespace-nowrap" style={{minWidth:'105px'}}>
+                                            <EditableCell value={sub.start_date ? sub.start_date.split('T')[0] : ''} onSave={(v) => updateField(sub.id, 'start_date', v)} type="date" />
                                         </td>
 
                                         {/* Code Équipe */}
-                                        <td className="px-2 py-1 w-16 truncate">
-                                            <EditableCell
-                                                value={sub.team_code}
-                                                onSave={(value) => updateField(sub.id, 'team_code', value)}
-                                                type="text"
-                                            />
+                                        <td className="px-3 py-2 whitespace-nowrap" style={{minWidth:'90px'}}>
+                                            <EditableCell value={sub.team_code} onSave={(v) => updateField(sub.id, 'team_code', v)} type="text" />
                                         </td>
-
-
 
                                         {/* Test Fibre */}
                                         {activeTab === 'Fibre' && (
-                                            <td className="px-2 py-1 whitespace-nowrap text-center">
+                                            <td className="px-3 py-2 whitespace-nowrap text-center">
                                                 <button
                                                     onClick={() => updateField(sub.id, 'fiber_test_done', !sub.fiber_test_done)}
-                                                    className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${sub.fiber_test_done
+                                                    className={`w-5 h-5 rounded border flex items-center justify-center mx-auto transition-colors ${sub.fiber_test_done
                                                         ? 'bg-green-500 border-green-500'
                                                         : 'bg-white border-gray-300 hover:border-gray-400'
                                                         }`}
                                                 >
-                                                    {sub.fiber_test_done && <CheckCircle size={10} className="text-white" />}
+                                                    {sub.fiber_test_done && <CheckCircle size={12} className="text-white" />}
                                                 </button>
                                             </td>
                                         )}
 
                                         {/* Documents */}
-                                        <td className="px-2 py-1 whitespace-nowrap">
+                                        <td className="px-3 py-2 whitespace-nowrap">
                                             <div className="flex items-center space-x-1">
                                                 {sub.id_card_front_path && (
-                                                    <button
-                                                        onClick={() => openPreview(sub.id_card_front_path, 'pdf')}
-                                                        className="p-1 hover:bg-blue-50 rounded transition-colors"
-                                                        title="CNI R"
-                                                    >
+                                                    <button onClick={() => openPreview(sub.id_card_front_path, 'pdf')} className="p-1 hover:bg-blue-50 rounded transition-colors" title="CNI R">
                                                         <FileText size={14} className="text-blue-500" />
                                                     </button>
                                                 )}
                                                 {sub.id_card_back_path && (
-                                                    <button
-                                                        onClick={() => openPreview(sub.id_card_back_path, 'pdf')}
-                                                        className="p-1 hover:bg-blue-50 rounded transition-colors"
-                                                        title="CNI V"
-                                                    >
+                                                    <button onClick={() => openPreview(sub.id_card_back_path, 'pdf')} className="p-1 hover:bg-blue-50 rounded transition-colors" title="CNI V">
                                                         <FileText size={14} className="text-blue-500" />
                                                     </button>
                                                 )}
                                                 {sub.signature_path && (
-                                                    <button
-                                                        onClick={() => openPreview(sub.signature_path, 'image')}
-                                                        className="p-1 hover:bg-purple-50 rounded transition-colors"
-                                                        title="Sig"
-                                                    >
+                                                    <button onClick={() => openPreview(sub.signature_path, 'image')} className="p-1 hover:bg-purple-50 rounded transition-colors" title="Sig">
                                                         <Eye size={14} className="text-purple-600" />
                                                     </button>
                                                 )}
                                                 {sub.signed_pdf_path && (
-                                                    <button
-                                                        onClick={() => openPreview(sub.signed_pdf_path, 'pdf')}
-                                                        className="p-1 hover:bg-red-50 rounded transition-colors"
-                                                        title="PDF Sig"
-                                                    >
+                                                    <button onClick={() => openPreview(sub.signed_pdf_path, 'pdf')} className="p-1 hover:bg-red-50 rounded transition-colors" title="PDF Sig">
                                                         <Download size={14} className="text-red-500" />
                                                     </button>
                                                 )}
                                                 {sub.signed_charte_path && (
-                                                    <button
-                                                        onClick={() => openPreview(sub.signed_charte_path, 'pdf')}
-                                                        className="p-1 hover:bg-amber-50 rounded transition-colors"
-                                                        title="Charte"
-                                                    >
+                                                    <button onClick={() => openPreview(sub.signed_charte_path, 'pdf')} className="p-1 hover:bg-amber-50 rounded transition-colors" title="Charte">
                                                         <FileText size={14} className="text-amber-500" />
                                                     </button>
                                                 )}
@@ -835,14 +798,10 @@ const AdminDashboard = () => {
                                         </td>
 
                                         {/* Actions */}
-                                        <td className="px-2 py-1 whitespace-nowrap text-center">
+                                        <td className="px-3 py-2 whitespace-nowrap text-center">
                                             <div className="flex items-center justify-center space-x-1">
                                                 <button
-                                                    onClick={() => {
-                                                        setSelectedSubmissionId(sub.id);
-                                                        setRefusalReason('');
-                                                        setShowRefusalModal(true);
-                                                    }}
+                                                    onClick={() => { setSelectedSubmissionId(sub.id); setRefusalReason(''); setShowRefusalModal(true); }}
                                                     className="p-1 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                                     title="Refuser"
                                                 >

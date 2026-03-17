@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS accreditations (
     id INT AUTO_INCREMENT PRIMARY KEY,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     status ENUM('En Cours', 'Approuvé', 'Refusé') DEFAULT 'En Cours',
+    badge BOOLEAN NOT NULL DEFAULT 0,
     type ENUM('Fibre', 'Energie') DEFAULT 'Fibre',
     contract_type VARCHAR(50),
     

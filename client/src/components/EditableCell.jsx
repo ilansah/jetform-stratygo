@@ -199,13 +199,13 @@ const EditableCell = ({
     return (
         <div
             onDoubleClick={handleDoubleClick}
-            className="px-2 py-1 cursor-pointer hover:bg-gray-50 rounded transition-colors min-h-[32px] flex items-center group"
-            title="Double-cliquez pour éditer"
+            className="px-2 py-1 cursor-pointer hover:bg-gray-50 rounded transition-colors min-h-[32px] flex items-center group w-full"
+            title={value || placeholder}
         >
-            <span className={`${!value ? 'text-gray-400 italic' : 'text-gray-700'}`}>
+            <span className={`whitespace-nowrap ${!value ? 'text-gray-400 italic' : 'text-gray-700'}`}>
                 {value || placeholder}
             </span>
-            <span className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-xs text-gray-400">
+            <span className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-xs text-gray-400 flex-shrink-0">
                 ✏️
             </span>
         </div>

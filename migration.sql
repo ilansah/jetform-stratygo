@@ -13,3 +13,7 @@ ADD COLUMN signed_charte_path VARCHAR(255) AFTER signed_pdf_path;
 -- 4. (Optional) Ensure fiber_test_done has a default value (fixes potential bugs)
 ALTER TABLE accreditations 
 MODIFY COLUMN fiber_test_done BOOLEAN NOT NULL DEFAULT 0;
+
+-- 5. Add 'badge' column to track whether a badge has been issued
+ALTER TABLE accreditations 
+ADD COLUMN badge BOOLEAN NOT NULL DEFAULT 0 AFTER status;

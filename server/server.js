@@ -326,7 +326,7 @@ app.put('/api/submissions/:id', async (req, res) => {
             'full_name', 'phone', 'email', 'address', 'start_date',
             'direct_manager_name', 'director_name', 'network_animator_name',
             'team_code', 'manager_email', 'hr_email',
-            'fiber_test_done', 'proxy_name', 'terms_accepted', 'status',
+            'fiber_test_done', 'proxy_name', 'terms_accepted', 'status', 'badge',
             'role', 'contract_type', 'agency_city'
         ];
 
@@ -342,7 +342,7 @@ app.put('/api/submissions/:id', async (req, res) => {
             if (allowedFields.includes(key)) {
                 updateFields.push(`${key} = ?`);
                 // Handle boolean fields
-                if (key === 'fiber_test_done' || key === 'terms_accepted') {
+                if (key === 'fiber_test_done' || key === 'terms_accepted' || key === 'badge') {
                     values.push(updates[key] === 'true' || updates[key] === true || updates[key] === 1);
                 } else {
                     values.push(updates[key]);
