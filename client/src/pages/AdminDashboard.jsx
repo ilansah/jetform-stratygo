@@ -454,7 +454,7 @@ const AdminDashboard = () => {
                 <Header />
                 <div className="flex items-center justify-center h-96">
                     <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: '#e63946' }}></div>
+                        <div className="rounded-full h-12 w-12 mx-auto mb-4" style={{ border: '3px solid #e6394622', borderTopColor: '#e63946', animation: 'spin 0.8s linear infinite' }}></div>
                         <p style={{ color: '#4a4a4a' }}>Chargement...</p>
                     </div>
                 </div>
@@ -640,8 +640,8 @@ const AdminDashboard = () => {
                                                 onClick={() => updateField(sub.id, 'badge', !sub.badge)}
                                                 className={`w-7 h-7 rounded-full flex items-center justify-center mx-auto transition-all ${
                                                     sub.badge
-                                                        ? 'bg-amber-400 text-white shadow-sm hover:bg-amber-500'
-                                                        : 'bg-gray-100 text-gray-300 hover:bg-amber-100 hover:text-amber-400'
+                                                        ? 'bg-green-500 text-white shadow-sm hover:bg-green-600'
+                                                        : 'bg-gray-100 text-gray-300 hover:bg-green-100 hover:text-green-500'
                                                 }`}
                                                 title={sub.badge ? 'Badge attribué — cliquer pour retirer' : 'Pas de badge — cliquer pour attribuer'}
                                             >
