@@ -666,12 +666,12 @@ const AdminDashboard = () => {
                                                 }}
                                                 className={`w-7 h-7 rounded-full flex items-center justify-center mx-auto transition-all ${
                                                     Number(sub.badge) === 1
-                                                        ? 'bg-green-500 text-white shadow-sm hover:bg-green-600'
-                                                        : Number(sub.badge) === 2
                                                         ? 'bg-blue-500 text-white shadow-sm hover:bg-blue-600'
-                                                        : 'bg-gray-100 text-gray-300 hover:bg-green-100 hover:text-green-500'
+                                                        : Number(sub.badge) === 2
+                                                        ? 'bg-green-500 text-white shadow-sm hover:bg-green-600'
+                                                        : 'bg-gray-100 text-gray-300 hover:bg-blue-100 hover:text-blue-500'
                                                 }`}
-                                                title={Number(sub.badge) === 1 ? 'Badge Vert — cliquer pour changer en bleu' : Number(sub.badge) === 2 ? 'Badge Bleu — cliquer pour retirer' : 'Pas de badge — cliquer pour attribuer (Vert)'}
+                                                title={Number(sub.badge) === 1 ? 'Badge Bleu — cliquer pour changer en vert' : Number(sub.badge) === 2 ? 'Badge Vert — cliquer pour retirer' : 'Pas de badge — cliquer pour attribuer (Bleu)'}
                                             >
                                                 <Medal size={14} />
                                             </button>
