@@ -147,7 +147,13 @@ const dbConfig = {
     database: (process.env.DB_NAME || 'stratygo_fiber').trim(),
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0
+    queueLimit: 0,
+    typeCast: function (field, next) {
+        if (field.type === 'TINY' && field.length === 1 && field.name === 'badge') {
+            return Number(field.string() || 0);
+        }
+        return next();
+    }
 };
 
 console.error('👉 DEBUG CREDENTIALS (STDERR):');
@@ -342,8 +348,11 @@ app.put('/api/submissions/:id', async (req, res) => {
             if (allowedFields.includes(key)) {
                 updateFields.push(`${key} = ?`);
                 // Handle boolean fields
-                if (key === 'fiber_test_done' || key === 'terms_accepted' || key === 'badge') {
+                if (key === 'fiber_test_done' || key === 'terms_accepted') {
                     values.push(updates[key] === 'true' || updates[key] === true || updates[key] === 1);
+                } else if (key === 'badge') {
+                    // Badge can be 0, 1, or 2
+                    values.push(Number(updates[key]) || 0);
                 } else {
                     values.push(updates[key]);
                 }
