@@ -613,7 +613,7 @@ const AdminDashboard = () => {
                         className="overflow-x-auto border-b border-gray-100"
                         style={{ height: '14px' }}
                     >
-                        <div style={{ width: \`\${tableWidth}px\`, height: '1px' }} />
+                        <div style={{ width: `${tableWidth}px`, height: '1px' }} />
                     </div>
                     <div className="overflow-x-auto no-scrollbar" ref={tableRef} onScroll={handleTableScroll}>
                         <table className="w-full text-xs" style={{ minWidth: 'max-content' }}>
