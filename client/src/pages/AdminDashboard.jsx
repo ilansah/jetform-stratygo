@@ -160,8 +160,21 @@ const AdminDashboard = () => {
     // Scroll sync refs for top scrollbar
     const tableRef = React.useRef(null);
     const topScrollRef = React.useRef(null);
+    const [tableWidth, setTableWidth] = useState(2600);
+
     const handleTopScroll = () => { if (tableRef.current && topScrollRef.current) tableRef.current.scrollLeft = topScrollRef.current.scrollLeft; };
     const handleTableScroll = () => { if (tableRef.current && topScrollRef.current) topScrollRef.current.scrollLeft = tableRef.current.scrollLeft; };
+
+    useEffect(() => {
+        if (!tableRef.current) return;
+        const resizeObserver = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                setTableWidth(entry.target.scrollWidth);
+            }
+        });
+        resizeObserver.observe(tableRef.current);
+        return () => resizeObserver.disconnect();
+    }, [submissions, activeTab]);
 
     // Import functionality
     const fileInputRef = React.useRef(null);
@@ -583,7 +596,16 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Table Section */}
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden relative">
+                    <style>{`
+                        .no-scrollbar::-webkit-scrollbar {
+                            display: none;
+                        }
+                        .no-scrollbar {
+                            -ms-overflow-style: none; /* IE and Edge */
+                            scrollbar-width: none; /* Firefox */
+                        }
+                    `}</style>
                     {/* Top scrollbar — synchronized with table */}
                     <div
                         ref={topScrollRef}
@@ -591,10 +613,10 @@ const AdminDashboard = () => {
                         className="overflow-x-auto border-b border-gray-100"
                         style={{ height: '14px' }}
                     >
-                        <div style={{ width: '2600px', height: '1px' }} />
+                        <div style={{ width: \`\${tableWidth}px\`, height: '1px' }} />
                     </div>
-                    <div className="overflow-x-auto" ref={tableRef} onScroll={handleTableScroll}>
-                        <table className="w-full text-xs" style={{ minWidth: '2600px' }}>
+                    <div className="overflow-x-auto no-scrollbar" ref={tableRef} onScroll={handleTableScroll}>
+                        <table className="w-full text-xs" style={{ minWidth: 'max-content' }}>
                             <thead>
                                 <tr className="border-b border-gray-200" style={{ background: 'linear-gradient(to bottom, #f9fafb, #ffffff)' }}>
                                     <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'50px'}}>ID</th>
@@ -637,13 +659,19 @@ const AdminDashboard = () => {
                                         {/* Badge */}
                                         <td className="px-3 py-2 whitespace-nowrap text-center">
                                             <button
-                                                onClick={() => updateField(sub.id, 'badge', !sub.badge)}
+                                                onClick={() => {
+                                                    const currentBadge = Number(sub.badge) || 0;
+                                                    const nextBadge = currentBadge === 0 ? 1 : currentBadge === 1 ? 2 : 0;
+                                                    updateField(sub.id, 'badge', nextBadge);
+                                                }}
                                                 className={`w-7 h-7 rounded-full flex items-center justify-center mx-auto transition-all ${
-                                                    sub.badge
+                                                    Number(sub.badge) === 1
                                                         ? 'bg-green-500 text-white shadow-sm hover:bg-green-600'
+                                                        : Number(sub.badge) === 2
+                                                        ? 'bg-blue-500 text-white shadow-sm hover:bg-blue-600'
                                                         : 'bg-gray-100 text-gray-300 hover:bg-green-100 hover:text-green-500'
                                                 }`}
-                                                title={sub.badge ? 'Badge attribué — cliquer pour retirer' : 'Pas de badge — cliquer pour attribuer'}
+                                                title={Number(sub.badge) === 1 ? 'Badge Vert — cliquer pour changer en bleu' : Number(sub.badge) === 2 ? 'Badge Bleu — cliquer pour retirer' : 'Pas de badge — cliquer pour attribuer (Vert)'}
                                             >
                                                 <Medal size={14} />
                                             </button>
