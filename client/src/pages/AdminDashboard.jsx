@@ -36,6 +36,8 @@ const AdminDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [teamCodeFilter, setTeamCodeFilter] = useState('');
+    const [agencyCityFilter, setAgencyCityFilter] = useState('');
     const [previewFile, setPreviewFile] = useState(null);
     const [showPreview, setShowPreview] = useState(false);
     const [activeTab, setActiveTab] = useState('Fibre');
@@ -83,7 +85,7 @@ const AdminDashboard = () => {
             }, 300);
             return () => clearTimeout(timer);
         }
-    }, [isAuthenticated, activeTab, searchTerm, statusFilter]);
+    }, [isAuthenticated, activeTab, searchTerm, statusFilter, teamCodeFilter, agencyCityFilter]);
 
     // Trigger pagination change separately to avoid loop if I added currentPage to above dependency
     useEffect(() => {
@@ -100,7 +102,9 @@ const AdminDashboard = () => {
                 limit: itemsPerPage,
                 type,
                 status: statusFilter !== 'all' ? statusFilter : '',
-                search: searchTerm
+                search: searchTerm,
+                teamCode: teamCodeFilter,
+                agencyCity: agencyCityFilter
             });
 
             const response = await fetch(`/api/submissions?${queryParams.toString()}`);
@@ -542,6 +546,28 @@ const AdminDashboard = () => {
                                 <option value="Approuvé">Approuvé</option>
                                 <option value="Refusé">Refusé</option>
                             </select>
+                        </div>
+
+                        {/* Team Code Filter */}
+                        <div className="min-w-[150px]">
+                            <input
+                                type="text"
+                                placeholder="Code équipe..."
+                                value={teamCodeFilter}
+                                onChange={(e) => setTeamCodeFilter(e.target.value)}
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+
+                        {/* Agency City Filter */}
+                        <div className="min-w-[150px]">
+                            <input
+                                type="text"
+                                placeholder="Ville agence..."
+                                value={agencyCityFilter}
+                                onChange={(e) => setAgencyCityFilter(e.target.value)}
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
                         </div>
 
                         {/* Import Button */}

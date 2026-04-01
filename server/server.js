@@ -455,9 +455,11 @@ app.get('/api/submissions', async (req, res) => {
         const type = req.query.type; // 'Fibre' or 'Energie'
         const search = req.query.search;
         const status = req.query.status;
+        const teamCode = req.query.teamCode;
+        const agencyCity = req.query.agencyCity;
         const offset = (page - 1) * limit;
 
-        console.log('GET /api/submissions Params:', { page, limit, type, search, status });
+        console.log('GET /api/submissions Params:', { page, limit, type, search, status, teamCode, agencyCity });
 
         let countQuery = 'SELECT COUNT(*) as total FROM accreditations WHERE 1=1';
         let dataQuery = 'SELECT * FROM accreditations WHERE 1=1';
@@ -483,6 +485,20 @@ app.get('/api/submissions', async (req, res) => {
 
             // We need to push search term 3 times
             queryParams.push(searchTerm, searchTerm, searchTerm);
+        }
+        
+        if (teamCode) {
+            const teamCodeLike = `%${teamCode}%`;
+            countQuery += ' AND team_code LIKE ?';
+            dataQuery += ' AND team_code LIKE ?';
+            queryParams.push(teamCodeLike);
+        }
+
+        if (agencyCity) {
+            const agencyCityLike = `%${agencyCity}%`;
+            countQuery += ' AND agency_city LIKE ?';
+            dataQuery += ' AND agency_city LIKE ?';
+            queryParams.push(agencyCityLike);
         }
 
         dataQuery += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
