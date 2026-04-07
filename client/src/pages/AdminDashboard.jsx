@@ -654,13 +654,13 @@ const AdminDashboard = () => {
                                     <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'140px'}}>Téléphone</th>
                                     <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'240px'}}>Email</th>
                                     <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'140px'}}>Rôle</th>
-                                    <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'140px'}}>Contrat</th>
+                                    <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'90px'}}>Équipe</th>
                                     <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'150px'}}>Ville Agence</th>
                                     <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'180px'}}>Manager Direct</th>
                                     <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'180px'}}>Directeur</th>
                                     <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'180px'}}>Animateur</th>
                                     <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'105px'}}>Date Début</th>
-                                    <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'90px'}}>Équipe</th>
+                                    <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'140px'}}>Contrat</th>
                                     {activeTab === 'Fibre' && (
                                         <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{minWidth:'90px'}}>Test Fibre</th>
                                     )}
@@ -770,9 +770,9 @@ const AdminDashboard = () => {
                                             <EditableCell value={sub.role} onSave={(v) => updateField(sub.id, 'role', v)} type="select" options={['Vendeur', 'Manager', 'Directeur', 'Animateur Réseau']} />
                                         </td>
 
-                                        {/* Type Contrat */}
-                                        <td className="px-3 py-2 whitespace-nowrap" style={{minWidth:'140px'}}>
-                                            <EditableCell value={sub.contract_type || '-'} onSave={(v) => updateField(sub.id, 'contract_type', v)} type="select" options={['VRP', 'VDI', 'CDI/CDD', 'Auto-entrepreneur']} />
+                                        {/* Code Équipe */}
+                                        <td className="px-3 py-2 whitespace-nowrap" style={{minWidth:'90px'}}>
+                                            <EditableCell value={sub.team_code} onSave={(v) => updateField(sub.id, 'team_code', v)} type="text" />
                                         </td>
 
                                         {/* Ville Agence */}
@@ -800,9 +800,9 @@ const AdminDashboard = () => {
                                             <EditableCell value={sub.start_date ? sub.start_date.split('T')[0] : ''} onSave={(v) => updateField(sub.id, 'start_date', v)} type="date" />
                                         </td>
 
-                                        {/* Code Équipe */}
-                                        <td className="px-3 py-2 whitespace-nowrap" style={{minWidth:'90px'}}>
-                                            <EditableCell value={sub.team_code} onSave={(v) => updateField(sub.id, 'team_code', v)} type="text" />
+                                        {/* Type Contrat */}
+                                        <td className="px-3 py-2 whitespace-nowrap" style={{minWidth:'140px'}}>
+                                            <EditableCell value={sub.contract_type || '-'} onSave={(v) => updateField(sub.id, 'contract_type', v)} type="select" options={['VRP', 'VDI', 'CDI/CDD', 'Auto-entrepreneur']} />
                                         </td>
 
                                         {/* Test Fibre */}
